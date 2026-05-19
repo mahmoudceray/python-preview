@@ -21,7 +21,7 @@ export class PythonPreview {
 
     private _resource: vscode.Uri;
     private _locked: boolean;
-    private _startingInstrcution: number | undefined;
+    private _startingInstruction: number | undefined;
 
     private _codAndNavWidth: number | undefined;
 
@@ -99,7 +99,7 @@ export class PythonPreview {
     private constructor(webviewPanel: vscode.WebviewPanel,
                         resource: vscode.Uri,
                         locked: boolean,
-                        staringInstruction: number | undefined,
+                        startingInstruction: number | undefined,
                         width: number | undefined,
                         private readonly _previewManager: PythonPreviewManager,
                         private readonly _context: vscode.ExtensionContext,
@@ -109,18 +109,18 @@ export class PythonPreview {
                         private readonly _logger: Logger) {
         this._resource = resource;
         this._locked = locked;
-        this._startingInstrcution = staringInstruction;
+        this._startingInstruction = startingInstruction;
         this._codAndNavWidth = width;
         this._webviewPanel = webviewPanel;
 
         this._webviewPanel.onDidDispose(() => {
             this.dispose();
-        }, null, this._disposables);
+        }, undefined, this._disposables);
 
         this._webviewPanel.onDidChangeViewState(e => {
             this.updateContentWithStatus(true);
             this._onDidChangeViewStateEmitter.fire(e);
-        }, null, this._disposables);
+        }, undefined, this._disposables);
 
         // 处理来自webview的消息
         this._webviewPanel.webview.onDidReceiveMessage(e => {
@@ -136,23 +136,23 @@ export class PythonPreview {
                     this.onDidUpdateStartingInstruction(e.body.curInstr);
                     break;
                 case 'updateCodAndNavWidth':
-                    this.onDidUpdataCodAndNavWidth(e.body.width);
+                    this.onDidUpdateCodAndNavWidth(e.body.width);
                     break;
             }
-        }, null, this._disposables);
+        }, undefined, this._disposables);
 
         vscode.workspace.onDidChangeTextDocument(event => {
             if (this.isPreviewOf(event.document.uri)) {
                 // 文本改变直接传送给调试器，等待调试器返回trace
                 this._previewManager.postMessageToDebugger(event.document.fileName, event.document.getText());
             }
-        }, null, this._disposables);
+        }, undefined, this._disposables);
 
         vscode.window.onDidChangeActiveTextEditor(editor => {
             if (editor && isPythonFile(editor.document) && !this._locked) {
                 this.update(editor.document.uri);
             }
-        }, null, this._disposables);
+        }, undefined, this._disposables);
     }
 
     public get resource(): vscode.Uri {
@@ -167,12 +167,12 @@ export class PythonPreview {
         return {
             resource: this._resource.toString(),
             locked: this._locked,
-            startingInstruction: this._startingInstrcution,
+            startingInstruction: this._startingInstruction,
             width: this._codAndNavWidth
         };
     }
 
-    public get visibale(): boolean {
+    public get visible(): boolean {
         return this._webviewPanel.visible;
     }
 
@@ -210,7 +210,7 @@ export class PythonPreview {
         const isResourceChange = resource.fsPath !== this._resource.fsPath;
         if (isResourceChange) {
             this._resource = resource;
-            this._startingInstrcution = undefined;
+            this._startingInstruction = undefined;
             this.initialContent();
         }
     }
@@ -245,13 +245,13 @@ export class PythonPreview {
     }
 
     public updateStatus() {
-        this._startingInstrcution = undefined;
+        this._startingInstruction = undefined;
     }
 
     public updateContentWithStatus(hasStatus: boolean) {
         const cacheOutput = this._cachedOutputs.get(this._resource.fsPath);
         // 如果此时还没有缓存的输出或者正在调试中，则直接返回
-        if (!cacheOutput || cacheOutput.status !== PythonOutputStatus.Prcoessed) return;
+        if (!cacheOutput || cacheOutput.status !== PythonOutputStatus.Processed) return;
         const config = this._previewConfigurationManager.getConfigCacheForResource(this._resource);
         if (this._codAndNavWidth === undefined) {
             this._codAndNavWidth = config.contentConfig.codAndNavWidth;
@@ -267,7 +267,7 @@ export class PythonPreview {
             lang: this._previewManager.lang,
             width: this._codAndNavWidth
         };
-        if (hasStatus) options.startingInstruction = this._startingInstrcution;
+        if (hasStatus) options.startingInstruction = this._startingInstruction;
         if (this.position) {
             this._logger.info(`Updating ${PythonPreview.getPreviewTitle(this._resource, this._locked)} (Group ${this.position})`);
         } else {
@@ -347,10 +347,10 @@ export class PythonPreview {
     }
 
     private onDidUpdateStartingInstruction(curInstr: number) {
-        this._startingInstrcution = curInstr;
+        this._startingInstruction = curInstr;
     }
 
-    private onDidUpdataCodAndNavWidth(width: number) {
+    private onDidUpdateCodAndNavWidth(width: number) {
         this._codAndNavWidth = width;
     }
 }

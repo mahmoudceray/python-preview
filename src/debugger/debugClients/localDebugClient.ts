@@ -104,10 +104,9 @@ export class LocalDebugClient extends BaseDebugClient<LaunchRequestArguments> {
             // if (this.debugServerStatus === DebugServerStatus.NotRunning) {
             //     return failedToLaunch(error);
             // }
-            let x = 0;
         });
 
-        proc.stdout.setEncoding('utf-8');
+        proc.stdout.setEncoding('utf8');
         proc.stdout.on('data', d => {
             const arr = d.toString().split('&');
             const length = arr.length;

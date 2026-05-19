@@ -16,7 +16,7 @@
         "url": "https://github.com/dongli0x00/python-preview"
     },
     "engines": {
-        "vscode": "^1.26.0"
+        "vscode": "^1.85.0"
     },
     "categories": [
         "Programming Languages",
@@ -332,7 +332,7 @@
                 },
                 "pythonPreview.stackAndHeapHeader.fontFamily": {
                     "type": "string",
-                    "default": "erdana, arial, helvetica, sans-serif",
+                    "default": "verdana, arial, helvetica, sans-serif",
                     "description": "%pythonPreview.stackAndHeapHeader.fontFamily.desc%",
                     "scope": "resource"
                 },
@@ -487,26 +487,29 @@
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test",
-        "postinstall": "node ./node_modules/vscode/bin/install",
+        "lint": "eslint src --ext .ts",
+        "test": "npm run compile && node ./out/test/runTest.js",
         "clean:python-preview": "gulp clean:python-preview",
         "extract:python-preview": "npm run compile && gulp extract:python-preview"
     },
     "devDependencies": {
-        "@types/mocha": "^2.2.42",
-        "@types/node": "^7.0.43",
-        "del": "^3.0.0",
-        "gulp": "^3.9.1",
-        "gulp-filter": "^5.1.0",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.11.0",
+        "@types/vscode": "^1.85.0",
+        "@typescript-eslint/eslint-plugin": "^7.0.0",
+        "@typescript-eslint/parser": "^7.0.0",
+        "@vscode/test-electron": "^2.3.9",
+        "del": "^7.1.0",
+        "eslint": "^8.56.0",
+        "gulp": "^4.0.2",
+        "gulp-filter": "^9.0.0",
+        "mocha": "^10.2.0",
         "parse-semver": "^1.1.1",
-        "tslint": "^5.8.0",
-        "typescript": "^2.6.1",
-        "underscore": "^1.9.1",
-        "vscode": "^1.1.6"
+        "typescript": "^5.4.0"
     },
     "dependencies": {
-        "tree-kill": "^1.2.0",
-        "uint64be": "^2.0.2",
-        "untildify": "^3.0.3"
+        "tree-kill": "^1.2.2",
+        "uint64be": "^3.0.0",
+        "untildify": "^5.0.0"
     }
 }

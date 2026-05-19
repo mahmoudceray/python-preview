@@ -15,53 +15,49 @@ write_int = _util.write_int
 read_string = _util.read_string
 write_string = _util.write_string
 
-try:
-    xrange
-except:
-    xrange = range
-
 LOAD = to_bytes('LOAD')
 OUTP = to_bytes('OUTP')
 DETC = to_bytes('DETC')
 
 def debug(port_num, debug_id, current_pid):
     attach_process(port_num, debug_id, current_pid)
-    
+
     report_process_loaded()
 
     DebuggerLoop(conn).loop()
-    
+
 def report_process_loaded():
     write_bytes(conn, LOAD)
     write_string(conn, '.'.join(map(str, sys.version_info)))
 
 def attach_process(port_num, debug_id, current_pid):
     global conn
-    for i in xrange(50):
+    for i in range(50):
         try:
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             conn.connect(('127.0.0.1', port_num))
             write_string(conn, debug_id)
-            write_int(conn, 0) # success
-            write_int(conn, current_pid) # success
+            write_int(conn, 0)  # success
+            write_int(conn, current_pid)  # success
             break
-        except:
+        except Exception:
             import time
             time.sleep(50. / 1000)
     else:
         sys.stdout.write('&error&failed to attach')
-        sys.stderr.flush()
+        sys.stdout.flush()
         raise Exception('failed to attach')
-    
 
-class DebuggerExitException(Exception): pass
+
+class DebuggerExitException(Exception):
+    pass
 
 
 class DebuggerLoop:
-    instacne = None
-    
+    instance = None
+
     def __init__(self, conn):
-        DebuggerLoop.instacne = self
+        DebuggerLoop.instance = self
         self._conn = conn
         self._command_table = {
             to_bytes('outp'): self.command_exec_script,
@@ -85,7 +81,7 @@ class DebuggerLoop:
             pass
         except socket.error:
             pass
-        except:
+        except Exception:
             traceback.print_exc()
 
     def command_exec_script(self):
@@ -110,7 +106,7 @@ class DebuggerLoop:
         write_bytes(self._conn, OUTP)
         write_string(self._conn, resource)
         write_string(self._conn, trace_str)
-    
+
     def command_detach(self):
         write_bytes(self._conn, DETC)
 

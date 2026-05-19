@@ -6,14 +6,16 @@ module.exports = {
 
     output: {
         path: path.resolve(__dirname, '..', 'assets'),
-        filename: 'index.js'
+        filename: 'index.js',
+        clean: true
     },
 
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.ts$/,
-                loader: 'ts-loader'
+                use: 'ts-loader',
+                exclude: /node_modules/
             }
         ]
     },
@@ -34,4 +36,4 @@ module.exports = {
             $: 'jquery'
         })
     ]
-}
+};

@@ -1,39 +1,21 @@
 import sys
 import struct
-from encodings import utf_8, ascii
 
-try:
-    unicode
-except:
-    unicode = str
-
-try:
-    xrange
-except:
-    xrange = range
-
-if sys.version_info[0] >= 3:
-    def to_bytes(cmd_str):
-        return ascii.Codec.encode(cmd_str)[0]
-else:
-    def to_bytes(cmd_str):
-        return cmd_str
-
-if sys.version_info[0] >= 3:
-    def to_str(cmd_bytes):
-        return ascii.Codec.decode(cmd_bytes)[0]
-else:
-    def to_str(cmd_bytes):
-        return cmd_bytes
+UNICODE_PREFIX = b'U'
+ASCII_PREFIX = b'A'
+NONE_PREFIX = b'N'
 
 
-UNICODE_PREFIX = to_bytes('U')
-ASCII_PREFIX = to_bytes('A')
-NONE_PREFIX = to_bytes('N')
+def to_bytes(cmd_str):
+    return cmd_str.encode('ascii')
+
+
+def to_str(cmd_bytes):
+    return cmd_bytes.decode('ascii')
 
 
 def read_bytes(conn, count):
-    b = to_bytes('')
+    b = b''
     while len(b) < count:
         received_data = conn.recv(count - len(b))
         if received_data is None:
@@ -47,8 +29,6 @@ def write_bytes(conn, b):
 
 
 def read_int(conn):
-    # '!' represents network(=big-endian) byte order
-    # 'q' represent long long in c type, integer in python type, 8 standard size
     return struct.unpack('!q', read_bytes(conn, 8))[0]
 
 
@@ -60,23 +40,18 @@ def read_string(conn):
     str_len = read_int(conn)
     if not str_len:
         return ''
-    res = to_bytes('')
+    res = b''
     while len(res) < str_len:
         res = res + conn.recv(str_len - len(res))
-    res = utf_8.decode(res)[0]
-    if sys.version_info[0] == 2:
-        try:
-            res = ascii.Codec.encode(res)[0]
-        except UnicodeEncodeError:
-            pass
+    res = res.decode('utf-8')
     return res
 
 
 def write_string(conn, s):
     if s is None:
         write_bytes(conn, NONE_PREFIX)
-    elif isinstance(s, unicode):
-        b = utf_8.encode(s)[0]
+    elif isinstance(s, str):
+        b = s.encode('utf-8')
         b_len = len(b)
         write_bytes(conn, UNICODE_PREFIX)
         write_int(conn, b_len)

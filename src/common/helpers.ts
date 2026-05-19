@@ -1,5 +1,5 @@
 export function isNotInstalledError(error: Error): boolean {
-    const isError = typeof(error) === 'object' && error != null;
+    const isError = typeof(error) === 'object' && error !== null;
     const errorObj = <any>error;
     if (!isError) {
         return false;
@@ -14,9 +14,9 @@ export interface Deferred<T> {
     readonly rejected: boolean;
     readonly completed: boolean;
 
-    resolve(value?: T | PromiseLike<T>);
+    resolve(value?: T | PromiseLike<T>): void;
 
-    reject(reason?: any);
+    reject(reason?: any): void;
 }
 
 class DeferredImpl<T> implements Deferred<T> {
@@ -26,7 +26,7 @@ class DeferredImpl<T> implements Deferred<T> {
     private _rejected: boolean = false;
     private _promise: Promise<T>;
 
-    constructor(private _scope: any = null) {
+    constructor() {
         this._promise = new Promise<T>((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
@@ -50,16 +50,16 @@ class DeferredImpl<T> implements Deferred<T> {
     }
 
     public resolve(value?: T | PromiseLike<T>) {
-        this._resolve.apply(this._scope ? this._scope : this, arguments);
+        this._resolve(value);
         this._resolved = true;
     }
 
     public reject(reason?: any) {
-        this._reject.apply(this._scope ? this._scope : this, arguments);
+        this._reject(reason);
         this._rejected = true;
     }
 }
 
-export function createDeferred<T>(scope: any = null): Deferred<T> {
-    return new DeferredImpl<T>(scope);
+export function createDeferred<T>(): Deferred<T> {
+    return new DeferredImpl<T>();
 }

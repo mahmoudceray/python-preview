@@ -55,7 +55,7 @@ class StyleConfiguration {
     public readonly styles: string[];
 
     public constructor(pythonConfig: vscode.WorkspaceConfiguration) {
-        this.fontFamily = pythonConfig.get<string | undefined>('fontFamliy', undefined);
+        this.fontFamily = pythonConfig.get<string | undefined>('fontFamily', undefined);
         this.fontSize = Math.max(16, +pythonConfig.get<number>('fontSize', NaN));
         this.langDisplayFF = pythonConfig.get<string | undefined>('langDisplay.fontFamily', undefined);
         this.langDisplayFS = Math.max(14, +pythonConfig.get<number>('langDisplay.fontSize', NaN));
@@ -68,14 +68,14 @@ class StyleConfiguration {
         this.codeFooterDocsFS = Math.max(12, +pythonConfig.get<number>('codeFooterDocs.fontSize', NaN));
         this.printOutputDocsFF = pythonConfig.get<string | undefined>('printOutputDocs.fontFamily', undefined);
         this.printOutputDocsFS = Math.max(12, +pythonConfig.get<number>('printOutputDocs.fontSize', NaN));
-        this.pyStdoutFF = pythonConfig.get<string | undefined>('progOutputs.fontFamily', undefined);
-        this.pyStdoutFs = Math.max(14, +pythonConfig.get<number>('progOutputs.fontSize', NaN));
+        this.pyStdoutFF = pythonConfig.get<string | undefined>('pyStdout.fontFamily', undefined);
+        this.pyStdoutFs = Math.max(14, +pythonConfig.get<number>('pyStdout.fontSize', NaN));
         this.stackAndHeapHeaderFF = pythonConfig.get<string | undefined>('stackAndHeapHeader.fontFamily', undefined);
         this.stackAndHeapHeaderFS = Math.max(14, +pythonConfig.get<number>('stackAndHeapHeader.fontSize', NaN));
         this.stackFrameFF = pythonConfig.get<string | undefined>('stackFrame.fontFamily', undefined);
         this.stackFrameFS = Math.max(14, +pythonConfig.get<number>('stackFrame.fontSize', NaN));
         this.retValFS = Math.max(12, +pythonConfig.get<number>('retVal.fontSize', NaN));
-        this.stackFrameHeaderFF = pythonConfig.get<string | undefined>('stackFrameHeder.fontFamily', undefined);;
+        this.stackFrameHeaderFF = pythonConfig.get<string | undefined>('stackFrameHeader.fontFamily', undefined);
         this.stackFrameHeaderFS = Math.max(14, +pythonConfig.get<number>('stackFrameHeader.fontSize', NaN));
         this.heapObjectFF = pythonConfig.get<string | undefined>('heapObject.fontFamily', undefined);
         this.heapObjectFS = Math.max(14, +pythonConfig.get<number>('heapObject.fontSize', NaN));
@@ -103,8 +103,8 @@ class StyleConfiguration {
     }
 
     public equals(otherConfig: StyleConfiguration) {
-        for (let key in this) {
-            if (this.hasOwnProperty(key) && key !== 'styles' && this[key] !== otherConfig[key]) {
+        for (const key of Object.keys(this)) {
+            if (key !== 'styles' && this[key] !== otherConfig[key]) {
                     return false;
             }
         }
@@ -142,8 +142,8 @@ class ContentConfiguration {
     }
 
     public equals(otherConfig: ContentConfiguration) {
-        for (let key in this) {
-            if (this.hasOwnProperty(key) && this[key] !== otherConfig[key]) {
+        for (const key of Object.keys(this)) {
+            if (this[key] !== otherConfig[key]) {
                 return false;
             }
         }
@@ -165,8 +165,8 @@ class TraceConfiguration {
     }
 
     public equals(otherConfig: TraceConfiguration) {
-        for (let key in this) {
-            if (this.hasOwnProperty(key) && this[key] !== otherConfig[key]) {
+        for (const key of Object.keys(this)) {
+            if (this[key] !== otherConfig[key]) {
                 return false;
             }
         }

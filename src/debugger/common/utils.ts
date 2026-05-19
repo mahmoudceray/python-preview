@@ -1,6 +1,6 @@
 'use strict';
 
-import untildify = require("untildify");
+import untildify from "untildify";
 import * as path from "path";
 import * as child_process from "child_process";
 export const IS_WINDOWS = /^win/.test(process.platform);
@@ -24,24 +24,24 @@ export function getPythonExecutable(pythonPath: string): string {
         return pythonPath;
     }
 
-    const knownPythonExecutables = ['python', 'python3.7', 'python3.6', 'python3.5', 'python3', 'python2.7', 'python2'];
+    const knownPythonExecutables = ['python', 'python3.13', 'python3.12', 'python3.11', 'python3.10', 'python3.9', 'python3.8', 'python3'];
 
-    for (let executableName of knownPythonExecutables) {
+    for (const executableName of knownPythonExecutables) {
         // Suffix with 'python' for linux and 'osx', and 'python.exe' for 'windows'.
         if (IS_WINDOWS) {
-            executableName = `${executableName}.exe`;
-            if (isValidPythonPath(path.join(pythonPath, executableName))) {
-                return path.join(pythonPath, executableName);
+            const exeName = `${executableName}.exe`;
+            if (isValidPythonPath(path.join(pythonPath, exeName))) {
+                return path.join(pythonPath, exeName);
             }
-            if (isValidPythonPath(path.join(pythonPath, 'scripts', executableName))) {
-                return path.join(pythonPath, 'scripts', executableName);
+            if (isValidPythonPath(path.join(pythonPath, 'scripts', exeName))) {
+                return path.join(pythonPath, 'scripts', exeName);
             }
         } else {
             if (isValidPythonPath(path.join(pythonPath, executableName))) {
                 return path.join(pythonPath, executableName);
             }
             if (isValidPythonPath(path.join(pythonPath, 'bin', executableName))) {
-                return path.join(pythonPath, executableName);
+                return path.join(pythonPath, 'bin', executableName);
             }
         }
     }
@@ -58,7 +58,7 @@ export function getPythonExecutable(pythonPath: string): string {
 function isValidPythonPath(pythonPath: string): boolean {
     try {
         const output = child_process.execFileSync(pythonPath, ['-c', 'print(1234)'], {encoding: 'utf8'});
-        (output as string).startsWith('1234');
+        return (output as string).startsWith('1234');
     } catch (e) {
         return false;
     }

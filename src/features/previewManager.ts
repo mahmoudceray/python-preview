@@ -156,7 +156,7 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
                 this._cachedOutputs.clear();
             } else {
                 const isSameResource = this._previews.some(item => {
-                    if (item.resource.fsPath == preview.resource.fsPath) return true;
+                    return item.resource.fsPath === preview.resource.fsPath;
                 });
                 if (!isSameResource && this._cachedOutputs.has(preview.resource.fsPath)) {
                     this._cachedOutputs.delete(preview.resource.fsPath);
@@ -267,11 +267,11 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
     private onDebuggerOutput(fileName: string, output: string) {
         const data = JSON.parse(output);
         let cacheOutput = this._cachedOutputs.get(fileName)!;
-        cacheOutput.status = PythonOutputStatus.Prcoessed;
+        cacheOutput.status = PythonOutputStatus.Processed;
         cacheOutput.trace = data;
         this._previews.forEach(item => {
             if (item.isPreviewOf(vscode.Uri.file(fileName))) {
-                if (item.visibale) {
+                if (item.visible) {
                     item.updateContent();
                 }
             }

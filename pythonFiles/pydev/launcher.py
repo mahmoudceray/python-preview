@@ -6,21 +6,18 @@ sys.stdout.write('&info&succeeded to launch script')
 sys.stdout.flush()
 try:
     import debugger
-except:
+except Exception:
     traceback.print_exc()
     print('Press Enter to close...')
-    try:
-        raw_input()
-    except NameError:
-        input()
+    input()
     sys.exit(1)
 
 
-#=======================================================================================================================
+# ======================================================================================================================
 # 1. Debugger port to connect to.
 # 2. GUID for the debug session.
 # 3. Startup script name.
-#=======================================================================================================================
+# ======================================================================================================================
 port_num = int(sys.argv[1])
 debug_id = sys.argv[2]
 del sys.argv[1:3]

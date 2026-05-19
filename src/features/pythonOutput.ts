@@ -1,13 +1,13 @@
 export enum PythonOutputStatus {
     Initialized = 1,
     Processing = 2,
-    Prcoessed = 3
+    Processed = 3
 }
 
 export class PythonOutput {
     private _status: PythonOutputStatus;
 
-    public constructor(private _trace?: any, private _throttleTimer?: NodeJS.Timer) {
+    public constructor(private _trace?: any, private _throttleTimer?: NodeJS.Timeout) {
         this._status = PythonOutputStatus.Initialized;
     }
 
