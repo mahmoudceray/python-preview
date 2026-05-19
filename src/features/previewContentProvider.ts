@@ -21,11 +21,11 @@ export class PythonContentProvider {
                 <html>
                 <head>
                     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-                    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource:; media-src vscode-resource:; script-src 'nonce-${nonce}'; style-src vscode-resource: 'unsafe-inline'; font-src vscode-resource: https: http: https: data:;">
+                    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-webview-resource:; media-src vscode-webview-resource:; script-src 'nonce-${nonce}'; style-src vscode-webview-resource: 'unsafe-inline'; font-src vscode-webview-resource: https: http: https: data:;">
                     <meta id="vscode-python-preview-data"
                         data-state="${JSON.stringify(state || {}).replace(/"/g, '&quot;')}">
                     ${this.getStyles(sourceUri, nonce, config)}
-                    <base href="${pythonDocument.uri.with({scheme: 'vscode-resource'}).toString(true)}">
+                    <base href="${pythonDocument.uri.with({scheme: 'vscode-webview-resource'}).toString(true)}">
                 </head>
                 <body>
                 <div id="pyOutputPane"></div>
@@ -45,15 +45,15 @@ export class PythonContentProvider {
         }
 
         if (path.isAbsolute(href) || hrefUri.scheme === 'file') {
-            return vscode.Uri.file(href).with({scheme: 'vscode-resource'}).toString();
+            return vscode.Uri.file(href).with({scheme: 'vscode-webview-resource'}).toString();
         }
 
         const root = vscode.workspace.getWorkspaceFolder(resource);
         if (root) {
-            return vscode.Uri.file(path.join(root.uri.fsPath, href)).with({scheme: 'vscode-resource'}).toString();
+            return vscode.Uri.file(path.join(root.uri.fsPath, href)).with({scheme: 'vscode-webview-resource'}).toString();
         }
 
-        return vscode.Uri.file(path.join(path.dirname(resource.fsPath), href)).with({scheme: 'vscode-resource'}).toString();
+        return vscode.Uri.file(path.join(path.dirname(resource.fsPath), href)).with({scheme: 'vscode-webview-resource'}).toString();
     }
 
     private getSettingsOverrideStyles(nonce: string, config: PythonPreviewConfiguration): string {
@@ -221,7 +221,7 @@ export class PythonContentProvider {
 
     private extensionResourcePath(assetFile: string): string {
         return vscode.Uri.file(this._context.asAbsolutePath(path.join('assets', assetFile)))
-            .with({ scheme: 'vscode-resource' })
+            .with({ scheme: 'vscode-webview-resource' })
             .toString();
     }
 }
