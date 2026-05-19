@@ -1,6 +1,6 @@
 {
     "displayName": "Python 預覽",
-    "description": "为 Python 執行提供預覽效果。",
+    "description": "通過交互式調試預覽逐步可視化 Python 代碼執行過程。",
     "pythonPreview.showPreview.title": "打開預覽。",
     "pythonPreview.showPreviewToSide.title": "在側邊打開預覽",
     "pythonPreview.showLockedPreviewToSide.title": "在側邊打開鎖定的預覽",

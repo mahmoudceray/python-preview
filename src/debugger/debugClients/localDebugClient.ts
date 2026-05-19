@@ -101,7 +101,7 @@ export class LocalDebugClient extends BaseDebugClient<LaunchRequestArguments> {
 
         if (proc.stderr) {
             proc.stderr.setEncoding('utf8');
-            proc.stderr.on('data', error => {
+            proc.stderr.on('data', _error => {
                 // if (this.debugServerStatus === DebugServerStatus.NotRunning) {
                 //     return failedToLaunch(error);
                 // }

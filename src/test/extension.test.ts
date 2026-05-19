@@ -8,7 +8,9 @@ import * as assert from 'assert';
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as vscode from 'vscode';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as myExtension from '../extension';
 
 // Defines a Mocha test suite to group tests of similar kind together

@@ -13,7 +13,7 @@ export abstract class BaseDebugClient<T> extends EventEmitter {
 
     public stop() { }
 
-    public launchApplicationToDebug(debugServer: IDebugServer): Promise<any> {
+    public launchApplicationToDebug(_debugServer: IDebugServer): Promise<any> {
         return Promise.resolve();
     }
 }

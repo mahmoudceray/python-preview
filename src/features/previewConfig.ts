@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 
 
-enum ReloadType {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+enum _ReloadType {
     ReloadStyle = 1,
 
     ReloadContent = 2,

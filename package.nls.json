@@ -1,6 +1,6 @@
 {
     "displayName": "Python Preview",
-    "description": "Provide Preview for Python Execution.",
+    "description": "Visualize Python code execution step-by-step with interactive debugging preview.",
     "pythonPreview.showPreview.title": "Open Preview",
     "pythonPreview.showPreviewToSide.title": "Open Preview to the Side",
     "pythonPreview.showLockedPreviewToSide.title": "Open Locked Preview to the Side",

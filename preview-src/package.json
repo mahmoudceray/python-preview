@@ -1,15 +1,15 @@
 {
     "name": "preview-src",
     "version": "1.0.0",
-    "description": "",
+    "description": "Frontend visualization for Python Preview VS Code extension",
     "main": "index.js",
     "scripts": {
         "install-lib-typings": "typings install",
         "dev": "webpack --progress --colors --config webpack.dev.js",
         "prod": "webpack --progress --colors --config webpack.prod.js"
     },
-    "keywords": [],
-    "author": "",
+    "keywords": ["python", "visualization", "pytutor"],
+    "author": "Dong Li",
     "license": "BSD-3-Clause",
     "devDependencies": {
         "@types/jquery": "^4.0.0",

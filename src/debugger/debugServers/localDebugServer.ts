@@ -1,6 +1,5 @@
 'use strict';
 
-import * as vscode from 'vscode';
 import {BaseDebugServer} from './baseDebugServer';
 import * as net from 'net';
 import {IDebugServer, IPythonProcess, LaunchRequestArguments} from '../common/contracts';

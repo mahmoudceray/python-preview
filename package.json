@@ -2,7 +2,7 @@
     "name": "python-preview",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.0.4",
+    "version": "1.0.0",
     "icon": "python-icon.png",
     "author": {
         "name": "Dong Li",
@@ -25,7 +25,10 @@
     "keywords": [
         "python",
         "visualizer",
-        "preview"
+        "preview",
+        "debugger",
+        "python-tutor",
+        "code-visualization"
     ],
     "activationEvents": [
         "onCommand:pythonPreview.showPreview",
