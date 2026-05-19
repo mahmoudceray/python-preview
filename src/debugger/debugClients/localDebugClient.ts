@@ -99,29 +99,33 @@ export class LocalDebugClient extends BaseDebugClient<LaunchRequestArguments> {
             this._previewManager.dispose();
         });
 
-        proc.stderr.setEncoding('utf8');
-        proc.stderr.on('data', error => {
-            // if (this.debugServerStatus === DebugServerStatus.NotRunning) {
-            //     return failedToLaunch(error);
-            // }
-        });
+        if (proc.stderr) {
+            proc.stderr.setEncoding('utf8');
+            proc.stderr.on('data', error => {
+                // if (this.debugServerStatus === DebugServerStatus.NotRunning) {
+                //     return failedToLaunch(error);
+                // }
+            });
+        }
 
-        proc.stdout.setEncoding('utf8');
-        proc.stdout.on('data', d => {
-            const arr = d.toString().split('&');
-            const length = arr.length;
-            if (length <= 2) return;
-            const dataType = arr[length - 2];
-            const dataMessage = arr[length - 1];
-            if (dataType === 'info') {
-                this._logger.info(dataMessage);
-            } else if (dataType === 'warn') {
-                this._logger.warn(dataMessage);
-            } else if (dataType === 'error') {
-                this.displayError(dataMessage);
-                this._previewManager.dispose();
-            }
-        });
+        if (proc.stdout) {
+            proc.stdout.setEncoding('utf8');
+            proc.stdout.on('data', d => {
+                const arr = d.toString().split('&');
+                const length = arr.length;
+                if (length <= 2) return;
+                const dataType = arr[length - 2];
+                const dataMessage = arr[length - 1];
+                if (dataType === 'info') {
+                    this._logger.info(dataMessage);
+                } else if (dataType === 'warn') {
+                    this._logger.warn(dataMessage);
+                } else if (dataType === 'error') {
+                    this.displayError(dataMessage);
+                    this._previewManager.dispose();
+                }
+            });
+        }
     }
 
     private buildLaunchArguments(debugPort: number): string[] {

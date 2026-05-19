@@ -19,7 +19,7 @@ class LazyValue<T> implements Lazy<T> {
             this._hasValue = true;
             this._value = this._getValue();
         }
-        return this._value;
+        return this._value!;
     }
 
     public map<R>(f: (x: T) => R): Lazy<R> {

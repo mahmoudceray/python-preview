@@ -4,9 +4,9 @@ import * as net from "net";
 
 export interface IPythonProcess extends NodeJS.EventEmitter {
     connect(buffer: Buffer, socket: net.Socket): boolean;
-    handleInComingData(buffer: Buffer);
-    detach();
-    kill();
+    handleInComingData(buffer: Buffer): void;
+    detach(): void;
+    kill(): void;
 }
 
 export interface IDebugServer {

@@ -24,7 +24,7 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
     private readonly _disposables: vscode.Disposable[] = [];
 
     private _debuggerLoaded: Promise<any> | undefined;
-    private _debuggerLoadedPromiseResolve!: () => void;
+    private _debuggerLoadedPromiseResolve!: (value?: any) => void;
     private _pythonProcess?: PythonProcess;
     private _debugClient?: BaseDebugClient<{}>;
     private _debugServer!: BaseDebugServer;
@@ -225,9 +225,10 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
             let output = this._cachedOutputs.get(fileName);
             // 第一次传送数据，则直接传送
             if (!output) {
-                this._cachedOutputs.set(fileName, new PythonOutput());
+                const newOutput = new PythonOutput();
+                this._cachedOutputs.set(fileName, newOutput);
                 this.sendMessage(fileName, code);
-                output.status = PythonOutputStatus.Initialized;
+                newOutput.status = PythonOutputStatus.Initialized;
             } else {
                 // 如果是之后的传送，则设置定时器
                 clearTimeout(output.throttleTimer);

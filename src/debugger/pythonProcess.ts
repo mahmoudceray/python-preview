@@ -10,12 +10,12 @@ import { Commands } from "./proxyCommands";
 export class PythonProcess extends EventEmitter implements IPythonProcess {
     private _id: number;
     private _guid: string;
-    private _callbackHandler: PythonProcessCallbackHandler;
-    private _stream: SocketStream;
-    private _guidRead: boolean;
-    private _statusRead: boolean;
-    private _pidRead: boolean;
-    private _pid: number;
+    private _callbackHandler!: PythonProcessCallbackHandler;
+    private _stream!: SocketStream;
+    private _guidRead: boolean = false;
+    private _statusRead: boolean = false;
+    private _pidRead: boolean = false;
+    private _pid: number | undefined;
 
     constructor(id: number, guid: string) {
         super();
@@ -70,7 +70,8 @@ export class PythonProcess extends EventEmitter implements IPythonProcess {
 
         if (!this._pidRead) {
             this._stream.beginTransaction();
-            this._pid = this._stream.readInt32();
+            const pidResult = this._stream.readInt32();
+            this._pid = pidResult ?? undefined;
             if (this._stream.hasInsufficientDataForReading) {
                 this._stream.rollBackTransaction();
                 return false;

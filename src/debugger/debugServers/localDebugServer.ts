@@ -27,7 +27,7 @@ export class LocalDebugServer extends BaseDebugServer {
 
     public async start(): Promise<IDebugServer> {
         return new Promise<IDebugServer>((resolve, reject) => {
-            let connectedResolve = this._debugClientConnected.resolve.bind(this._debugClientConnected);
+            let connectedResolve: ((value: boolean) => void) | undefined = this._debugClientConnected.resolve.bind(this._debugClientConnected);
             let connected = false;
             let disconnected = false;
             this._debugSocketServer = net.createServer(c => {
@@ -37,12 +37,12 @@ export class LocalDebugServer extends BaseDebugServer {
                         // debug客户端已经连接到debug服务器
                         connectedResolve(true);
                         this._logger.info('Debug Client Connected');
-                        connectedResolve = null;
+                        connectedResolve = undefined;
                     }
                     if (!connected) {
-                        connected = this._pythonProcess.connect(buffer, c);
+                        connected = this._pythonProcess!.connect(buffer, c);
                     } else {
-                        this._pythonProcess.handleInComingData(buffer);
+                        this._pythonProcess!.handleInComingData(buffer);
                         this._isRunning = true;
                     }
                 });
@@ -81,7 +81,7 @@ export class LocalDebugServer extends BaseDebugServer {
             const host = typeof this._args.host === 'string' && this._args.host!.trim().length > 0 ? this._args.host!.trim() : 'localhost';
             this._debugSocketServer!.listen({port: port, host: host}, () => {
                 const server = this._debugSocketServer!.address();
-                resolve({port: server.port});
+                resolve({port: (server as net.AddressInfo).port});
             })
         });
     }

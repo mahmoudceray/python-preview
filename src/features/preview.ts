@@ -12,8 +12,8 @@ import { PythonOutput, PythonOutputStatus } from './pythonOutput';
 export interface PreviewState {
     readonly resource: string;
     readonly locked: boolean;
-    readonly startingInstruction: number
-    readonly width: number;
+    readonly startingInstruction: number | undefined;
+    readonly width: number | undefined;
 }
 
 export class PythonPreview {
@@ -256,7 +256,7 @@ export class PythonPreview {
         if (this._codAndNavWidth === undefined) {
             this._codAndNavWidth = config.contentConfig.codAndNavWidth;
         }
-        const options = {
+        const options: { [key: string]: any } = {
             jumpToEnd: true,
             startingInstruction: undefined,
             disableHeapNesting: config.contentConfig.disableHeapNesting,

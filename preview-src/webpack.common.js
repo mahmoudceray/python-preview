@@ -14,7 +14,12 @@ module.exports = {
         rules: [
             {
                 test: /\.ts$/,
-                use: 'ts-loader',
+                use: {
+                    loader: 'ts-loader',
+                    options: {
+                        transpileOnly: true
+                    }
+                },
                 exclude: /node_modules/
             }
         ]
@@ -23,8 +28,8 @@ module.exports = {
     resolve: {
         extensions: ['.ts', '.js'],
         alias: {
-            "jquery": path.resolve(__dirname, 'lib', 'jquery-3.0.0.min.js'),
-            "$": path.resolve(__dirname, 'lib', 'jquery-3.0.0.min.js'),
+            "jquery": path.resolve(__dirname, 'lib', 'jquery-3.7.1.min.js'),
+            "$": path.resolve(__dirname, 'lib', 'jquery-3.7.1.min.js'),
             "$.bbq": path.resolve(__dirname, 'lib', 'jquery.ba-bbq.js')
         }
     },

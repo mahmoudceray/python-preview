@@ -82,23 +82,23 @@ class StyleConfiguration {
         this.typeLabelFF = pythonConfig.get<string | undefined>('typeLabel.fontFamily', undefined);
         this.typeLabelFS = Math.max(12, +pythonConfig.get<number>('typeLabel.fontSize', NaN));
         
-        this.light_highlightedArrow_color = pythonConfig.get<string>('light.highlightedArrow.color');
-        this.light_highlightedStackFrame_bgColor = pythonConfig.get<string>('light.highlightedStackFrame.bgColor');
-        this.light_list_tuple_setTbl_bgColor = pythonConfig.get<string>('light.list-tuple-setTbl.bgColor');
-        this.light_dict_class_instKey_bgColor = pythonConfig.get<string>('light.dict-class-instKey.bgColor');
-        this.light_dict_class_instVal_bgColor = pythonConfig.get<string>('light.dict-class-instVal.bgColor');
+        this.light_highlightedArrow_color = pythonConfig.get<string>('light.highlightedArrow.color', '');
+        this.light_highlightedStackFrame_bgColor = pythonConfig.get<string>('light.highlightedStackFrame.bgColor', '');
+        this.light_list_tuple_setTbl_bgColor = pythonConfig.get<string>('light.list-tuple-setTbl.bgColor', '');
+        this.light_dict_class_instKey_bgColor = pythonConfig.get<string>('light.dict-class-instKey.bgColor', '');
+        this.light_dict_class_instVal_bgColor = pythonConfig.get<string>('light.dict-class-instVal.bgColor', '');
 
-        this.dark_highlightedArrow_color = pythonConfig.get<string>('dark.highlightedArrow.color');
-        this.dark_highlightedStackFrame_bgColor = pythonConfig.get<string>('dark.highlightedStackFrame.bgColor');
-        this.dark_list_tuple_setTbl_bgColor = pythonConfig.get<string>('dark.list-tuple-setTbl.bgColor');
-        this.dark_dict_class_instKey_bgColor = pythonConfig.get<string>('dark.dict-class-instKey.bgColor');
-        this.dark_dict_class_instVal_bgColor = pythonConfig.get<string>('dark.dict-class-instVal.bgColor');
+        this.dark_highlightedArrow_color = pythonConfig.get<string>('dark.highlightedArrow.color', '');
+        this.dark_highlightedStackFrame_bgColor = pythonConfig.get<string>('dark.highlightedStackFrame.bgColor', '');
+        this.dark_list_tuple_setTbl_bgColor = pythonConfig.get<string>('dark.list-tuple-setTbl.bgColor', '');
+        this.dark_dict_class_instKey_bgColor = pythonConfig.get<string>('dark.dict-class-instKey.bgColor', '');
+        this.dark_dict_class_instVal_bgColor = pythonConfig.get<string>('dark.dict-class-instVal.bgColor', '');
 
-        this.highContrast_highlightedArrow_color = pythonConfig.get<string>('high-contrast.highlightedArrow.color');
-        this.highContrast_highlightedStackFrame_bgColor = pythonConfig.get<string>('high-contrast.highlightedStackFrame.bgColor');
-        this.highContrast_list_tuple_setTbl_bgColor = pythonConfig.get<string>('high-contrast.list-tuple-setTbl.bgColor');
-        this.highContrast_dict_class_instKey_bgColor = pythonConfig.get<string>('high-contrast.dict-class-instKey.bgColor');
-        this.highContrast_dict_class_instVal_bgColor = pythonConfig.get<string>('high-contrast.dict-class-instVal.bgColor');
+        this.highContrast_highlightedArrow_color = pythonConfig.get<string>('high-contrast.highlightedArrow.color', '');
+        this.highContrast_highlightedStackFrame_bgColor = pythonConfig.get<string>('high-contrast.highlightedStackFrame.bgColor', '');
+        this.highContrast_list_tuple_setTbl_bgColor = pythonConfig.get<string>('high-contrast.list-tuple-setTbl.bgColor', '');
+        this.highContrast_dict_class_instKey_bgColor = pythonConfig.get<string>('high-contrast.dict-class-instKey.bgColor', '');
+        this.highContrast_dict_class_instVal_bgColor = pythonConfig.get<string>('high-contrast.dict-class-instVal.bgColor', '');
         this.styles = pythonConfig.get<string[]>('styles', []);
     }
 

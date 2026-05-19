@@ -7,8 +7,8 @@ import {IDebugServer, IPythonProcess} from "../common/contracts";
 
 export abstract class BaseDebugServer extends EventEmitter {
     protected _clientSocket: Deferred<Socket>;
-    protected _pythonProcess:IPythonProcess;
-    protected _isRunning: boolean;
+    protected _pythonProcess: IPythonProcess | undefined;
+    protected _isRunning: boolean = false;
     protected _debugClientConnected: Deferred<boolean>;
 
     constructor(pythonProcess?: IPythonProcess) {
@@ -28,5 +28,5 @@ export abstract class BaseDebugServer extends EventEmitter {
 
     public abstract start(): Promise<IDebugServer>;
 
-    public abstract stop();
+    public abstract stop(): void;
 }
