@@ -9,6 +9,7 @@ export class PythonContentProvider {
     }
 
     public provideTextDocumentContent(pythonDocument: vscode.TextDocument,
+                                      webview: vscode.Webview,
                                       previewConfigurationManager: PythonPreviewConfigurationManager,
                                       state?: any): string {
         const sourceUri = pythonDocument.uri;
@@ -16,25 +17,26 @@ export class PythonContentProvider {
 
         // Content Security Policy
         const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
+        const cspSource = webview.cspSource;
 
         return `<!DOCTYPE html>
                 <html>
                 <head>
                     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-                    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-webview-resource:; media-src vscode-webview-resource:; script-src 'nonce-${nonce}'; style-src vscode-webview-resource: 'unsafe-inline'; font-src vscode-webview-resource: https: http: https: data:;">
+                    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource}; media-src ${cspSource}; script-src 'nonce-${nonce}'; style-src ${cspSource} 'unsafe-inline'; font-src ${cspSource} https: http: data:;">
                     <meta id="vscode-python-preview-data"
                         data-state="${JSON.stringify(state || {}).replace(/"/g, '&quot;')}">
-                    ${this.getStyles(sourceUri, nonce, config)}
-                    <base href="${pythonDocument.uri.with({scheme: 'vscode-webview-resource'}).toString(true)}">
+                    ${this.getStyles(webview, sourceUri, nonce, config)}
+                    <base href="${webview.asWebviewUri(pythonDocument.uri)}">
                 </head>
                 <body>
                 <div id="pyOutputPane"></div>
-                <script async src="${this.extensionResourcePath('index.js')}" nonce="${nonce}"></script>
+                <script async src="${this.extensionResourcePath(webview, 'index.js')}" nonce="${nonce}"></script>
                 </body>
                 </html>`;
     }
 
-    private fixHref(resource: vscode.Uri, href: string): string {
+    private fixHref(webview: vscode.Webview, resource: vscode.Uri, href: string): string {
         if (!href) {
             return href;
         }
@@ -45,15 +47,15 @@ export class PythonContentProvider {
         }
 
         if (path.isAbsolute(href) || hrefUri.scheme === 'file') {
-            return vscode.Uri.file(href).with({scheme: 'vscode-webview-resource'}).toString();
+            return webview.asWebviewUri(vscode.Uri.file(href)).toString();
         }
 
         const root = vscode.workspace.getWorkspaceFolder(resource);
         if (root) {
-            return vscode.Uri.file(path.join(root.uri.fsPath, href)).with({scheme: 'vscode-webview-resource'}).toString();
+            return webview.asWebviewUri(vscode.Uri.file(path.join(root.uri.fsPath, href))).toString();
         }
 
-        return vscode.Uri.file(path.join(path.dirname(resource.fsPath), href)).with({scheme: 'vscode-webview-resource'}).toString();
+        return webview.asWebviewUri(vscode.Uri.file(path.join(path.dirname(resource.fsPath), href))).toString();
     }
 
     private getSettingsOverrideStyles(nonce: string, config: PythonPreviewConfiguration): string {
@@ -200,28 +202,28 @@ export class PythonContentProvider {
         </style>`;
     }
 
-    private getCustomStyles(resource: vscode.Uri, config: PythonPreviewConfiguration): string {
+    private getCustomStyles(webview: vscode.Webview, resource: vscode.Uri, config: PythonPreviewConfiguration): string {
         if (Array.isArray(config.styleConfig.styles)) {
             return config.styleConfig.styles.map(style => {
-                return `<link rel="stylesheet" class="code-user-style" data-source="${style.replace(/"/g, '&quot;')} href="${this.fixHref(resource, style)}" type="text/css" media="screen">`;
+                return `<link rel="stylesheet" class="code-user-style" data-source="${style.replace(/"/g, '&quot;')}" href="${this.fixHref(webview, resource, style)}" type="text/css" media="screen">`;
             }).join('\n');
         }
         return '';
     }
 
-    private getStyles(resource: vscode.Uri, nonce: string, config: PythonPreviewConfiguration): string {
+    private getStyles(webview: vscode.Webview, resource: vscode.Uri, nonce: string, config: PythonPreviewConfiguration): string {
         const baseStyles = ['jquery-ui.min.css', 'pytutor.common.css', 'pytutor.theme.css']
-            .map(item => `<link rel="stylesheet" type="text/css" href="${this.extensionResourcePath(item)}">`)
+            .map(item => `<link rel="stylesheet" type="text/css" href="${this.extensionResourcePath(webview, item)}">`)
             .join('\n');
 
         return `${baseStyles}
                 ${this.getSettingsOverrideStyles(nonce, config)}
-                ${this.getCustomStyles(resource, config)}`;
+                ${this.getCustomStyles(webview, resource, config)}`;
     }
 
-    private extensionResourcePath(assetFile: string): string {
-        return vscode.Uri.file(this._context.asAbsolutePath(path.join('assets', assetFile)))
-            .with({ scheme: 'vscode-webview-resource' })
-            .toString();
+    private extensionResourcePath(webview: vscode.Webview, assetFile: string): string {
+        return webview.asWebviewUri(
+            vscode.Uri.file(this._context.asAbsolutePath(path.join('assets', assetFile)))
+        ).toString();
     }
 }

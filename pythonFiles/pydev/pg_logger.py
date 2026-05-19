@@ -1384,7 +1384,7 @@ def exec_script_str(script_str, raw_input_lst_json, options_json, finalizer_func
 
     py_crazy_mode = ('py_crazy_mode' in options and options['py_crazy_mode'])
 
-    logger = PGLogger(options['cumulative_mode'], options['heap_primitives'], options['show_only_outputs'], finalizer_func,
+    logger = PGLogger(options['cumulative_mode'], options['heap_primitives'], options['show_only_outputs'], MAX_EXECUTED_LINES, finalizer_func,
                       crazy_mode=py_crazy_mode)
 
     # TODO: refactor these NOT to be globals
@@ -1422,9 +1422,11 @@ def exec_script_str_local(script_str, raw_input_lst_json, cumulative_mode, heap_
         # TODO: if we want to support unicode, remove str() cast
         input_string_queue = [str(e) for e in json.loads(raw_input_lst_json)]
 
+    result = None
     try:
         logger._runscript(script_str)
     except bdb.BdbQuit:
         pass
     finally:
-        return logger.finalize()
+        result = logger.finalize()
+    return result

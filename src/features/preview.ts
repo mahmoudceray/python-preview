@@ -220,7 +220,7 @@ export class PythonPreview {
         this._currentVersion = { resource: this._resource, version: document.version };
         this._webviewPanel.title = PythonPreview.getPreviewTitle(this._resource, this._locked);
         this._webviewPanel.webview.options = PythonPreview.getWebviewOptions(this._resource, this._context);
-        this._webviewPanel.webview.html = this._contentProvider.provideTextDocumentContent(document, this._previewConfigurationManager, this.state);
+        this._webviewPanel.webview.html = this._contentProvider.provideTextDocumentContent(document, this._webviewPanel.webview, this._previewConfigurationManager, this.state);
         this._previewManager.postMessageToDebugger(document.fileName, document.getText());
     }
 
@@ -229,7 +229,7 @@ export class PythonPreview {
         
         this._webviewPanel.title = PythonPreview.getPreviewTitle(this._resource, this._locked);
         this._webviewPanel.webview.options = PythonPreview.getWebviewOptions(this._resource, this._context);
-        this._webviewPanel.webview.html = this._contentProvider.provideTextDocumentContent(document, this._previewConfigurationManager, this.state);
+        this._webviewPanel.webview.html = this._contentProvider.provideTextDocumentContent(document, this._webviewPanel.webview, this._previewConfigurationManager, this.state);
 
         this._previewManager.postMessageToDebugger(document.fileName, document.getText());
     }

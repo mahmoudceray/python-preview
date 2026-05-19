@@ -93,9 +93,10 @@ export class PythonProcess extends EventEmitter implements IPythonProcess {
         this._stream.append(buffer);
 
         if (!this._guidRead) {
-            this._stream.rollBackTransaction();
+            this._stream.beginTransaction();
             this._stream.readString();
             if (this._stream.hasInsufficientDataForReading) {
+                this._stream.rollBackTransaction();
                 return;
             }
             this._guidRead = true;
@@ -109,7 +110,7 @@ export class PythonProcess extends EventEmitter implements IPythonProcess {
                 this._stream.rollBackTransaction();
                 return;
             }
-            this._pidRead = true;
+            this._statusRead = true;
             this._stream.endTransaction();
         }
 
