@@ -1,5 +1,5 @@
-import { Command } from "../common/commandManager";
-import { PythonPreviewManager } from "../features/previewManager";
+import { Command } from '../common/commandManager';
+import { PythonPreviewManager } from '../features/previewManager';
 
 export class ToggleLockCommand implements Command {
     public readonly id = 'pythonPreview.toggleLock';

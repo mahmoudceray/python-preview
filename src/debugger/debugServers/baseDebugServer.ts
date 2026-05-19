@@ -1,9 +1,9 @@
 'use strict';
 
-import {EventEmitter} from "events";
-import {createDeferred, Deferred} from "../../common/helpers";
-import {Socket} from "net";
-import {IDebugServer, IPythonProcess} from "../common/contracts";
+import {EventEmitter} from 'events';
+import {createDeferred, Deferred} from '../../common/helpers';
+import {Socket} from 'net';
+import {IDebugServer, IPythonProcess} from '../common/contracts';
 
 export abstract class BaseDebugServer extends EventEmitter {
     protected _clientSocket: Deferred<Socket>;

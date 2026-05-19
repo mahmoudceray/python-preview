@@ -1,8 +1,8 @@
 'use strict';
 
-import untildify from "untildify";
-import * as path from "path";
-import * as child_process from "child_process";
+import untildify from 'untildify';
+import * as path from 'path';
+import * as child_process from 'child_process';
 export const IS_WINDOWS = /^win/.test(process.platform);
 
 /**

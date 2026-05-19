@@ -1,11 +1,11 @@
 'use strict';
 
-import {EventEmitter} from "events";
-import {IPythonProcess} from "./common/contracts";
-import {PythonProcessCallbackHandler} from "./pythonProcessCallbackHandler";
-import {SocketStream} from "../common/net/socket/socketStream";
-import * as net from "net";
-import { Commands } from "./proxyCommands";
+import {EventEmitter} from 'events';
+import {IPythonProcess} from './common/contracts';
+import {PythonProcessCallbackHandler} from './pythonProcessCallbackHandler';
+import {SocketStream} from '../common/net/socket/socketStream';
+import * as net from 'net';
+import { Commands } from './proxyCommands';
 
 export class PythonProcess extends EventEmitter implements IPythonProcess {
     private _id: number;
@@ -26,10 +26,11 @@ export class PythonProcess extends EventEmitter implements IPythonProcess {
     public kill() {
         if (this._pid && typeof this._pid === 'number') {
             try {
-                let kill = require('tree-kill');
+                const kill = require('tree-kill');
                 kill(this._pid!);
                 this._pid = undefined;
             } catch (e) {
+                // ignore kill errors
             }
 
         }

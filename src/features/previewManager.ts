@@ -1,19 +1,19 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import * as path from 'path';
-import {PythonPreviewConfigurationManager} from "./previewConfig";
-import {PythonPreview} from "./preview";
-import {PythonContentProvider} from "./previewContentProvider";
-import {Logger} from "../common/logger";
-import {disposeAll} from "../common/dispose";
-import { IDebugServer, LaunchRequestArguments } from "../debugger/common/contracts";
-import { PythonProcess } from "../debugger/pythonProcess";
-import { BaseDebugClient } from "../debugger/debugClients/baseDebugClient";
-import { BaseDebugServer } from "../debugger/debugServers/baseDebugServer";
-import { getPythonExecutable } from "../debugger/common/utils";
-import { DebuggerLauncherScriptProvider } from "../debugger/debugClients/launcherProvider";
-import { LocalDebugClient } from "../debugger/debugClients/localDebugClient";
-import { PythonOutput, PythonOutputStatus } from "./pythonOutput";
-import { isNotInstalledError } from "../common/helpers";
+import {PythonPreviewConfigurationManager} from './previewConfig';
+import {PythonPreview} from './preview';
+import {PythonContentProvider} from './previewContentProvider';
+import {Logger} from '../common/logger';
+import {disposeAll} from '../common/dispose';
+import { IDebugServer, LaunchRequestArguments } from '../debugger/common/contracts';
+import { PythonProcess } from '../debugger/pythonProcess';
+import { BaseDebugClient } from '../debugger/debugClients/baseDebugClient';
+import { BaseDebugServer } from '../debugger/debugServers/baseDebugServer';
+import { getPythonExecutable } from '../debugger/common/utils';
+import { DebuggerLauncherScriptProvider } from '../debugger/debugClients/launcherProvider';
+import { LocalDebugClient } from '../debugger/debugClients/localDebugClient';
+import { PythonOutput, PythonOutputStatus } from './pythonOutput';
+import { isNotInstalledError } from '../common/helpers';
 
 export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
     private static readonly _pythonPreviewActiveContextKey = 'pythonPreviewFocus';
@@ -26,7 +26,7 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
     private _debuggerLoaded: Promise<any> | undefined;
     private _debuggerLoadedPromiseResolve!: (value?: any) => void;
     private _pythonProcess?: PythonProcess;
-    private _debugClient?: BaseDebugClient<{}>;
+    private _debugClient?: BaseDebugClient<unknown>;
     private _debugServer!: BaseDebugServer;
     private _launchArgs!: LaunchRequestArguments;
     private _cachedOutputs: Map<string, PythonOutput>;
@@ -181,16 +181,17 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
     public createDebugger(args: LaunchRequestArguments): void {
         try {
             args.pythonPath = getPythonExecutable(args.pythonPath);
-        } catch (ex) { }
+        } catch (ex) {
+            // ignore python path errors
+        }
 
         this._launchArgs = args;
-        let launchScriptProvider = new DebuggerLauncherScriptProvider();
+        const launchScriptProvider = new DebuggerLauncherScriptProvider();
         this._debugClient = new LocalDebugClient(args, launchScriptProvider, this, this._logger);
         
-        const that = this;
         this.startDebugServer().then(debugServer => {
             this._logger.info(`Started Debug Server. It is listening port - ${debugServer.port}`);
-            return that._debugClient!.launchApplicationToDebug(debugServer);
+            return this._debugClient!.launchApplicationToDebug(debugServer);
         }).catch(error => {
             let errorMsg = typeof error === 'string' ? error : ((error.message && error.message.length > 0) ? error.message : error);
             if (isNotInstalledError(error)) {
@@ -222,7 +223,7 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
             this.createDebugger(this._launchArgs);
         }
         this._debuggerLoaded.then(() => {
-            let output = this._cachedOutputs.get(fileName);
+            const output = this._cachedOutputs.get(fileName);
             // 第一次传送数据，则直接传送
             if (!output) {
                 const newOutput = new PythonOutput();
@@ -252,7 +253,7 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
     }
 
     private static getWorkspacePathOrPathRealtiveToFile(fileName: string) {
-        let root = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(fileName));
+        const root = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(fileName));
         if (root) {
             return root.uri.fsPath;
         }
@@ -267,7 +268,7 @@ export class PythonPreviewManager implements vscode.WebviewPanelSerializer {
 
     private onDebuggerOutput(fileName: string, output: string) {
         const data = JSON.parse(output);
-        let cacheOutput = this._cachedOutputs.get(fileName)!;
+        const cacheOutput = this._cachedOutputs.get(fileName)!;
         cacheOutput.status = PythonOutputStatus.Processed;
         cacheOutput.trace = data;
         this._previews.forEach(item => {

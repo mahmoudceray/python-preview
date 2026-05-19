@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import {Command} from "../common/commandManager";
-import {PythonPreviewManager} from "../features/previewManager";
+import {Command} from '../common/commandManager';
+import {PythonPreviewManager} from '../features/previewManager';
 
 interface ShowPreviewSettings {
     readonly sideBySide: boolean;

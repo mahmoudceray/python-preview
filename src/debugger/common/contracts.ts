@@ -1,6 +1,6 @@
 'use strict';
 
-import * as net from "net";
+import * as net from 'net';
 
 export interface IPythonProcess extends NodeJS.EventEmitter {
     connect(buffer: Buffer, socket: net.Socket): boolean;

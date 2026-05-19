@@ -1,7 +1,7 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import * as path from 'path';
-import {Logger} from "../common/logger";
-import {PythonPreviewConfiguration, PythonPreviewConfigurationManager} from "./previewConfig";
+import {Logger} from '../common/logger';
+import {PythonPreviewConfiguration, PythonPreviewConfigurationManager} from './previewConfig';
 
 export class PythonContentProvider {
     constructor(private readonly _context: vscode.ExtensionContext,
@@ -48,7 +48,7 @@ export class PythonContentProvider {
             return vscode.Uri.file(href).with({scheme: 'vscode-resource'}).toString();
         }
 
-        let root = vscode.workspace.getWorkspaceFolder(resource);
+        const root = vscode.workspace.getWorkspaceFolder(resource);
         if (root) {
             return vscode.Uri.file(path.join(root.uri.fsPath, href)).with({scheme: 'vscode-resource'}).toString();
         }
@@ -203,7 +203,7 @@ export class PythonContentProvider {
     private getCustomStyles(resource: vscode.Uri, config: PythonPreviewConfiguration): string {
         if (Array.isArray(config.styleConfig.styles)) {
             return config.styleConfig.styles.map(style => {
-                return `<link rel="stylesheet" class="code-user-style" data-source="${style.replace(/"/g, '&quot;')} href="${this.fixHref(resource, style)}" type="text/css" media="screen">`
+                return `<link rel="stylesheet" class="code-user-style" data-source="${style.replace(/"/g, '&quot;')} href="${this.fixHref(resource, style)}" type="text/css" media="screen">`;
             }).join('\n');
         }
         return '';

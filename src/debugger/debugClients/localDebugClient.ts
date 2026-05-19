@@ -1,15 +1,15 @@
 'use strict';
 
-import * as vscode from "vscode";
-import {BaseDebugClient} from "./baseDebugClient";
-import {IDebugServer, IPythonProcess, LaunchRequestArguments} from "../common/contracts";
-import {ChildProcess, spawn} from "child_process";
-import {BaseDebugServer} from "../debugServers/baseDebugServer";
-import {IDebugLauncherScriptProvider} from "./launcherProvider";
-import {LocalDebugServer} from "../debugServers/localDebugServer";
-import { isNotInstalledError } from "../../common/helpers";
-import { Logger } from "../../common/logger";
-import { PythonPreviewManager } from "../../features/previewManager";
+import * as vscode from 'vscode';
+import {BaseDebugClient} from './baseDebugClient';
+import {IDebugServer, IPythonProcess, LaunchRequestArguments} from '../common/contracts';
+import {ChildProcess, spawn} from 'child_process';
+import {BaseDebugServer} from '../debugServers/baseDebugServer';
+import {IDebugLauncherScriptProvider} from './launcherProvider';
+import {LocalDebugServer} from '../debugServers/localDebugServer';
+import { isNotInstalledError } from '../../common/helpers';
+import { Logger } from '../../common/logger';
+import { PythonPreviewManager } from '../../features/previewManager';
 
 enum DebugServerStatus {
     Unknown = 1,
@@ -82,7 +82,7 @@ export class LocalDebugClient extends BaseDebugClient<LaunchRequestArguments> {
             this._debugServer!.debugClientConnected
                 .then(resolve)
                 .catch(ex => console.error('Python Client Connect Exception: _debugServer.debugClientConnected', ex));
-        })
+        });
     }
 
     protected handleProcessOutput(proc: ChildProcess, failedToLaunch: (error: Error | string | Buffer) => void) {

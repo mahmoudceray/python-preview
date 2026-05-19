@@ -1,9 +1,9 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import {BaseDebugServer} from "./baseDebugServer";
-import * as net from "net";
-import {IDebugServer, IPythonProcess, LaunchRequestArguments} from "../common/contracts";
+import {BaseDebugServer} from './baseDebugServer';
+import * as net from 'net';
+import {IDebugServer, IPythonProcess, LaunchRequestArguments} from '../common/contracts';
 import { Logger } from '../../common/logger';
 
 export class LocalDebugServer extends BaseDebugServer {
@@ -20,7 +20,9 @@ export class LocalDebugServer extends BaseDebugServer {
 
         try {
             this._debugSocketServer.close();
-        } catch { }
+        } catch {
+            // ignore close errors
+        }
 
         this._debugSocketServer = undefined;
     }
@@ -51,7 +53,7 @@ export class LocalDebugServer extends BaseDebugServer {
                     this.emit('detach', d);
                 });
                 c.on('timeout', () => {
-                    const msg = `Debugger client timeout.`;
+                    const msg = 'Debugger client timeout.';
                     this._logger.warn(msg);
                 });
                 c.on('error', ex => {
@@ -82,7 +84,7 @@ export class LocalDebugServer extends BaseDebugServer {
             this._debugSocketServer!.listen({port: port, host: host}, () => {
                 const server = this._debugSocketServer!.address();
                 resolve({port: (server as net.AddressInfo).port});
-            })
+            });
         });
     }
 }

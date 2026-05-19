@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from "path";
+import * as path from 'path';
 
 export interface IDebugLauncherScriptProvider {
     getLauncherFilePath(): string;

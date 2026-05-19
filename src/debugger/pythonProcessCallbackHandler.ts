@@ -1,8 +1,8 @@
 'use strict';
 
-import {EventEmitter} from "events";
-import {IPythonProcess} from "./common/contracts";
-import {SocketStream} from "../common/net/socket/socketStream";
+import {EventEmitter} from 'events';
+import {IPythonProcess} from './common/contracts';
+import {SocketStream} from '../common/net/socket/socketStream';
 
 export class PythonProcessCallbackHandler extends EventEmitter {
     private _pythonProcess: IPythonProcess;
@@ -21,7 +21,7 @@ export class PythonProcessCallbackHandler extends EventEmitter {
 
         this._stream.beginTransaction();
 
-        let cmd = this._stream.readAsciiString(4);
+        const cmd = this._stream.readAsciiString(4);
         if (this._stream.hasInsufficientDataForReading) {
             return;
         }
@@ -46,7 +46,7 @@ export class PythonProcessCallbackHandler extends EventEmitter {
     }
 
     private handleProcessLoad() {
-        let pythonVersion = this._stream.readString();
+        const pythonVersion = this._stream.readString();
         if (this._stream.hasInsufficientDataForReading) {
             return;
         }
@@ -54,12 +54,12 @@ export class PythonProcessCallbackHandler extends EventEmitter {
     }
 
     private handleDebuggerOutput() {
-        let fileName = this._stream.readString();
-        let output = this._stream.readString();
+        const fileName = this._stream.readString();
+        const output = this._stream.readString();
         if (this._stream.hasInsufficientDataForReading) {
             return;
         }
-        this.emit("output", fileName, output);
+        this.emit('output', fileName, output);
     }
 
     private handleDetach() {

@@ -1,8 +1,8 @@
 'use strict';
 
-import {EventEmitter} from "events";
-import {IDebugServer, IPythonProcess} from "../common/contracts";
-import {BaseDebugServer} from "../debugServers/baseDebugServer";
+import {EventEmitter} from 'events';
+import {IDebugServer, IPythonProcess} from '../common/contracts';
+import {BaseDebugServer} from '../debugServers/baseDebugServer';
 
 export abstract class BaseDebugClient<T> extends EventEmitter {
     constructor(protected _args: T) {

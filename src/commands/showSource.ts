@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import {Command} from "../common/commandManager";
-import {PythonPreviewManager} from "../features/previewManager";
+import {Command} from '../common/commandManager';
+import {PythonPreviewManager} from '../features/previewManager';
 
 export class ShowSourceCommand implements Command {
     public readonly id = 'pythonPreview.showSource';

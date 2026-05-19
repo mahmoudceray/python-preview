@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import * as path from "path";
+import * as path from 'path';
 
-import {PythonContentProvider} from "./previewContentProvider";
-import {PythonPreviewConfigurationManager} from "./previewConfig";
-import {Logger} from "../common/logger";
-import {disposeAll} from "../common/dispose";
+import {PythonContentProvider} from './previewContentProvider';
+import {PythonPreviewConfigurationManager} from './previewConfig';
+import {Logger} from '../common/logger';
+import {disposeAll} from '../common/dispose';
 import { PythonPreviewManager } from './previewManager';
 import { isPythonFile } from '../common/file';
 import { PythonOutput, PythonOutputStatus } from './pythonOutput';
