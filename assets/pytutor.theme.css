@@ -1,0 +1,657 @@
+﻿/* ========================================================================== 
+   µ╗أفèذµإةµب╖ف╝
+   ========================================================================== */
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    background-color: var(--vscode-editor-background);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--vscode-scrollbarSlider-background);
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--vscode-scrollbarSlider-hoverBackground);
+}
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--vscode-scrollbarSlider-activeBackground)
+}
+
+/* ========================================================================== 
+   Visualizerف╖خك╛╣µبغ╕╗لتءµب╖ف╝ف«أغ╣ë
+   ========================================================================== */
+
+/**
+ * ك»صكذµبçلتءعé
+ */
+div.ExecutionVisualizer div#langDisplayDiv {
+    color: var(--vscode-editor-foreground);
+}
+
+/**
+ * غ╗ثقبفجûµةµ╗أفèذµإةعé
+ */
+div.ExecutionVisualizer div#pyCodeOutputDiv::-webkit-scrollbar-track,
+div.ExecutionVisualizer div#pyCodeOutputDiv::-webkit-scrollbar-corner {
+    background-color: var(--vscode-editor-background);
+}
+
+div.ExecutionVisualizer div#pyCodeOutputDiv::-webkit-scrollbar-thumb {
+    background-color: var(--vscode-scrollbarSlider-background);
+}
+div.ExecutionVisualizer div#pyCodeOutputDiv::-webkit-scrollbar-thumb:hover {
+    background-color: var(--vscode-scrollbarSlider-hoverBackground);
+}
+div.ExecutionVisualizer div#pyCodeOutputDiv::-webkit-scrollbar-thumb:active {
+    background-color: var(--vscode-scrollbarSlider-activeBackground)
+}
+
+/**
+ * غ╗ثقبفàµةعé
+ */
+body.vscode-light div.ExecutionVisualizer table#pyCodeOutput {
+    border-top-color: rgba(0, 0, 0, 0.15);
+    border-bottom-color: rgba(0, 0, 0, 0.15);
+}
+
+body.vscode-dark div.ExecutionVisualizer table#pyCodeOutput {
+    border-top-color: rgba(255, 255, 255, 0.15);
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer table#pyCodeOutput {
+    border-top-color: var(--vscode-contrastBorder);
+    border-bottom-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * كةîف╖فëµآ»كë▓عé
+ */
+div.ExecutionVisualizer table#pyCodeOutput .lineNo {
+    color: var(--vscode-editorLineNumber-foreground);
+}
+
+/**
+ * فؤ╛غ╛ïي╝îق¤ذµإحك»┤µءق«صفج┤فسغ╣ëعé
+ */
+div.ExecutionVisualizer div#legendDiv {
+    color: var(--vscode-editor-foreground);
+}
+
+/**
+ * ق¤ذµإحك»┤µءVisualizerق¤ذµ│ـعé
+ */
+div.ExecutionVisualizer #codeFooterDocs {
+    color: var(--vscode-editor-foreground);
+}
+
+/**
+ * غ╗ثقبµëدكةîك┐ؤف║خµإةµبçلتءعé
+ */
+div.ExecutionVisualizer #executionSliderCaption {
+    color: var(--vscode-editor-foreground);
+}
+
+/**
+ * ك┐ؤف║خµإةعé
+ */
+div.ExecutionVisualizer #executionSlider {
+    background: var(--vscode-editor-background);
+}
+
+div.ExecutionVisualizer #executionSlider {
+    border: 1px solid var(--vscode-scrollbarSlider-background);
+}
+
+/**
+ * غ╗ثقبµëدكةîك┐ؤف║خµإةµ╗ّقس┐µëïµاعé
+ */
+div.ExecutionVisualizer .ui-slider>.ui-slider-handle,
+div.ExecutionVisualizer .ui-slider>.ui-slider-default,
+div.ExecutionVisualizer .ui-slider>.ui-state-focus,
+div.ExecutionVisualizer .ui-slider>.ui-state-hover,
+div.ExecutionVisualizer .ui-slider>.ui-state-active {
+    background: var(--vscode-editor-background);
+}
+
+div.ExecutionVisualizer .ui-slider>.ui-slider-handle,
+div.ExecutionVisualizer .ui-slider>.ui-state-focus {
+    border: 1px solid var(--vscode-scrollbarSlider-background);
+    outline: 0px;
+}
+div.ExecutionVisualizer .ui-slider>.ui-state-hover {
+    border: 1px solid var(--vscode-scrollbarSlider-hoverBackground);
+    outline: 0px;
+}
+div.ExecutionVisualizer .ui-slider>.ui-state-active {
+    border: 1px solid var(--vscode-scrollbarSlider-activeBackground);
+    outline: 0px;
+}
+
+/**
+ * ك░âك»ـµدغ╗╢عé
+ */
+div.ExecutionVisualizer #vcrControls button {
+    color: var(--vscode-editor-foreground);
+    background-color: var(--vscode-editor-background);
+}
+
+div.ExecutionVisualizer #vcrControls button:focus {
+    outline: none;
+}
+
+div.ExecutionVisualizer #vcrControls button:active {
+    border-style: outset;
+}
+
+div.ExecutionVisualizer #vcrControls button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+body.vscode-light div.ExecutionVisualizer #vcrControls button {
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body.vscode-light div.ExecutionVisualizer #vcrControls button:focus {
+    border-color: rgba(0, 0, 0, 0.6);
+}
+
+body.vscode-light div.ExecutionVisualizer #vcrControls button:hover {
+    border-color: rgba(0, 0, 0, 0.3);
+}
+
+body.vscode-light div.ExecutionVisualizer #vcrControls button:active {
+    border-color: rgba(0, 0, 0, 0.45);
+}
+
+body.vscode-dark div.ExecutionVisualizer #vcrControls button {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.vscode-dark div.ExecutionVisualizer #vcrControls button:focus {
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+body.vscode-dark div.ExecutionVisualizer #vcrControls button:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.vscode-dark div.ExecutionVisualizer #vcrControls button:active {
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer #vcrControls button {
+    border-color: var(--vscode-contrastBorder);
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer #vcrControls button:active {
+    border-color: var(--vscode-contrastActiveBorder);
+}
+
+/**
+ * ق¤ذµê╖ك╛ôفàحقزùفثعé
+ */
+div.ExecutionVisualizer  #rawUserInputDiv {
+    border-color: #e93f34;
+}
+
+/**
+ * ل¤آك»»غ┐ةµ»ك╛ôفç║قزùفثعé
+ */
+div.ExecutionVisualizer #errorOutput {
+    color: var(--vscode-errorForeground);
+}
+
+/**
+ * ك░âµـ┤فجدف░قأفêلأ¤قشخعé
+ */
+.ui-resizable-e,
+.ui-resizable-s {
+    background-color: var(--vscode-panel-border);
+    border-color: var(--vscode-editor-background);
+}
+
+.ui-resizable-e:hover {
+    border-color: var(--vscode-panel-border);
+    width: 0px
+}
+
+.ui-resizable-s:hover {
+    border-color: var(--vscode-panel-border);
+    height: 0px;
+}
+
+/* ========================================================================== 
+   Visualizerف│ك╛╣µبغ╕╗لتءµب╖ف╝ف«أغ╣ë
+   ========================================================================== */
+
+/**
+ * قذïف║µدفê╢ف░قزùفثك»┤µءعé
+ */
+div.ExecutionVisualizer #printOutputDocs {
+    color: var(--vscode-editor-foreground);
+}
+
+/**
+ * قذïف║µبçفçك╛ôفç║عé
+ */
+div.ExecutionVisualizer #pyStdout {
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+}
+
+div.ExecutionVisualizer #pyStdout:focus {
+    outline: 0px;
+    outline-offset: 0px;
+}
+
+div.ExecutionVisualizer #pyStdout::-webkit-scrollbar-track,
+div.ExecutionVisualizer #pyStdout::-webkit-scrollbar-corner {
+    background-color: var(--vscode-editor-background);
+}
+
+div.ExecutionVisualizer #pyStdout::-webkit-scrollbar-thumb {
+    background-color: var(--vscode-scrollbarSlider-background);
+}
+div.ExecutionVisualizer #pyStdout::-webkit-scrollbar-thumb:hover {
+    background-color: var(--vscode-scrollbarSlider-hoverBackground);
+}
+div.ExecutionVisualizer #pyStdout::-webkit-scrollbar-thumb:active {
+    background-color: var(--vscode-scrollbarSlider-activeBackground)
+}
+
+body.vscode-light div.ExecutionVisualizer #pyStdout {
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body.vscode-dark div.ExecutionVisualizer #pyStdout {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer #pyStdout {
+    border-color: var(--vscode-contrastBorder);
+}
+
+body.vscode-light div.ExecutionVisualizer div#progOutputs .ui-icon {
+    background-image: url("images/ui-icons_444444_256x240.png");
+}
+
+body.vscode-dark div.ExecutionVisualizer div#progOutputs .ui-icon {
+    background-image: url("images/ui-icons_ffffff_256x240.png");
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer div#progOutputs .ui-icon {
+    background-image: url("images/ui-icons_777777_256x240.png");
+}
+
+/**
+ * فبµبçلتءعé
+ */
+div.ExecutionVisualizer div#stackHeader {
+    color: var(--vscode-editor-foreground);
+}
+
+/**
+ * µبêف╕دعé
+ */
+div.ExecutionVisualizer div.stackFrame,
+div.ExecutionVisualizer div.zombieStackFrame {
+    color: var(--vscode-editor-foreground);
+}
+ 
+body.vscode-light div.ExecutionVisualizer div.stackFrame,
+body.vscode-light div.ExecutionVisualizer div.zombieStackFrame {
+    border-left-color: #a6b3b6
+}
+body.vscode-light div.ExecutionVisualizer div.highlightedStackFrame {
+    /* ل££كë▓ */
+    background-color: #e9f1f6;
+}
+
+body.vscode-dark div.ExecutionVisualizer div.stackFrame,
+body.vscode-dark div.ExecutionVisualizer div.zombieStackFrame {
+    border-left-color: rgba(255, 255, 255, 0.3);
+}
+body.vscode-dark div.ExecutionVisualizer div.highlightedStackFrame {
+    /* ق┤سكë▓ */
+    background-color: #800080;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer div.stackFrame,
+body.vscode-high-contrast div.ExecutionVisualizer div.zombieStackFrame {
+    border-left-color: var(--vscode-contrastBorder);
+}
+body.vscode-high-contrast div.ExecutionVisualizer div.highlightedStackFrame {
+    /* µرءق║تكë▓ */
+    background-color: #ff7500;
+}
+
+/**
+ * µبêف╕دغ╕صقأفءلçف╝عé
+ */
+body.vscode-light div.ExecutionVisualizer td.stackFrameValue {
+    border-bottom-color: rgba(0, 0, 0, 0.3);
+    border-left-color: rgba(0, 0, 0, 0.3);
+}
+
+body.vscode-dark div.ExecutionVisualizer td.stackFrameValue {
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+    border-left-color: rgba(255, 255, 255, 0.3);
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer td.stackFrameValue {
+    border-bottom-color: var(--vscode-contrastBorder);
+    border-left-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * µبêف╕دغ╕صك┐¤فؤئف╝فëµآ»كë▓عé
+ */
+div.ExecutionVisualizer .stackFrame .retval {
+    color: #e93f34;
+}
+
+/**
+ * فبµبçلتءعé
+ */
+div.ExecutionVisualizer #heapHeader {
+    color: var(--vscode-editor-foreground);
+}
+
+/* ========================================================================== 
+   فا║µ£شفجفêق▒╗فئïقأغ╕╗لتء
+   ========================================================================== */
+
+/**
+ * listعtupleفْîsetق▒╗فئïعé
+ */
+body.vscode-light div.ExecutionVisualizer table.listTbl,
+body.vscode-light div.ExecutionVisualizer table.tupleTbl,
+body.vscode-light div.ExecutionVisualizer table.setTbl {
+    background-color: #ffffc6;
+}
+
+body.vscode-dark div.ExecutionVisualizer table.listTbl,
+body.vscode-dark div.ExecutionVisualizer table.tupleTbl,
+body.vscode-dark div.ExecutionVisualizer table.setTbl,
+body.vscode-high-contrast div.ExecutionVisualizer table.listTbl,
+body.vscode-high-contrast div.ExecutionVisualizer table.tupleTbl,
+body.vscode-high-contrast div.ExecutionVisualizer table.setTbl {
+    /* قحقكë▓ */
+    background-color: #ca6924;
+}
+
+div.ExecutionVisualizer table.tupleTbl {
+    color: var(--vscode-editor-foreground);
+}
+
+body.vscode-light div.ExecutionVisualizer table.tupleTbl,
+body.vscode-light div.ExecutionVisualizer table.setTbl {
+    border-color: #555555;
+    
+}
+
+body.vscode-dark div.ExecutionVisualizer table.tupleTbl,
+body.vscode-dark div.ExecutionVisualizer table.setTbl {
+    border-color: #aaaaaa;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer table.tupleTbl,
+body.vscode-high-contrast div.ExecutionVisualizer table.setTbl {
+    border-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * listفْîtupleفج┤عé
+ */
+body.vscode-light div.ExecutionVisualizer table.listTbl td.listHeader,
+body.vscode-light div.ExecutionVisualizer table.tupleTbl td.tupleHeader {
+    border-left-color: #555555;
+    color: #777
+}
+
+body.vscode-dark div.ExecutionVisualizer table.listTbl td.listHeader,
+body.vscode-dark div.ExecutionVisualizer table.tupleTbl td.tupleHeader {
+    border-left-color: #aaaaaa;
+    color: #999
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer table.listTbl td.listHeader,
+body.vscode-high-contrast div.ExecutionVisualizer table.tupleTbl td.tupleHeader {
+    border-left-color: var(--vscode-contrastBorder);
+    color: #999
+}
+
+/**
+ * listفàâق┤بعé
+ */
+body.vscode-light div.ExecutionVisualizer table.listTbl td.listElt {
+    border-bottom-color: #555555;
+    border-left-color: #555555;
+}
+
+body.vscode-dark div.ExecutionVisualizer table.listTbl td.listElt {
+    border-bottom-color: #aaaaaa;
+    border-left-color: #aaaaaa;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer table.listTbl td.listElt {
+    border-bottom-color: var(--vscode-contrastBorder);
+    border-left-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * tupleفàâق┤بعé
+ */
+body.vscode-light div.ExecutionVisualizer table.tupleTbl td.tupleElt {
+    border-left-color: #555555;
+}
+
+body.vscode-dark div.ExecutionVisualizer table.tupleTbl td.tupleElt {
+    border-left-color: #aaaaaa;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer table.tupleTbl td.tupleElt {
+    border-left-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * كçزف«أغ╣ëف»╣ك▒ةعé
+ */
+div.ExecutionVisualizer table.customObjTbl {
+    background-color: var(--vscode-editor-background);
+    border-color: var(--vscode-editor-foreground);
+    color: var(--vscode-editor-foreground);
+}
+
+/**
+ * dictعclassفْîinstanceغ╕صقأل¤«قأكâîµآ»كë▓عé
+ */
+body.vscode-light div.ExecutionVisualizer table.dictTbl td.dictKey,
+body.vscode-light div.ExecutionVisualizer table.classTbl td.classKey,
+body.vscode-light div.ExecutionVisualizer table.instTbl td.instKey {
+    background-color: #faebbf;
+}
+
+body.vscode-dark div.ExecutionVisualizer table.dictTbl td.dictKey,
+body.vscode-dark div.ExecutionVisualizer table.classTbl td.classKey,
+body.vscode-dark div.ExecutionVisualizer table.instTbl td.instKey,
+body.vscode-high-contrast div.ExecutionVisualizer table.dictTbl td.dictKey,
+body.vscode-high-contrast div.ExecutionVisualizer table.classTbl td.classKey,
+body.vscode-high-contrast div.ExecutionVisualizer table.instTbl td.instKey {
+    /* ك╖لت£ */
+    background-color: #f9906f;
+}
+
+/**
+ * dictعclassفْîinstanceغ╕صقأف╝قأكâîµآ»كë▓عé
+ */
+body.vscode-light div.ExecutionVisualizer table.dictTbl td.dictVal,
+body.vscode-light div.ExecutionVisualizer table.classTbl td.classVal,
+body.vscode-light div.ExecutionVisualizer table.instTbl td.instVal {
+    background-color: #ffffc6;
+}
+
+body.vscode-dark div.ExecutionVisualizer table.dictTbl td.dictVal,
+body.vscode-dark div.ExecutionVisualizer table.classTbl td.classVal,
+body.vscode-dark div.ExecutionVisualizer table.instTbl td.instVal,
+body.vscode-high-contrast div.ExecutionVisualizer table.dictTbl td.dictVal,
+body.vscode-high-contrast div.ExecutionVisualizer table.classTbl td.classVal,
+body.vscode-high-contrast div.ExecutionVisualizer table.instTbl td.instVal {
+    /* كî╢كë▓ */
+    background-color: #b35c44;
+}
+
+/**
+ * classفْîfunctionكةذµب╝قأك╛╣قـîكë▓عé
+ */
+body.vscode-light div.ExecutionVisualizer table.classTbl,
+body.vscode-light div.ExecutionVisualizer table.funcTbl {
+    border-color: #888;
+}
+
+body.vscode-dark div.ExecutionVisualizer table.classTbl,
+body.vscode-dark div.ExecutionVisualizer table.funcTbl {
+    border-color: #888;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer table.classTbl,
+body.vscode-high-contrast div.ExecutionVisualizer table.funcTbl {
+    border-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * classفْîinstanceكةذµب╝غ╕ïقأفàâق┤بك╛╣قـîعé
+ */
+body.vscode-light div.ExecutionVisualizer table.classTbl td,
+body.vscode-light div.ExecutionVisualizer table.instTbl td {
+    border-bottom-color: #888;
+}
+
+body.vscode-dark div.ExecutionVisualizer table.classTbl td,
+body.vscode-dark div.ExecutionVisualizer table.instTbl td {
+    border-bottom-color: #888;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer table.classTbl td,
+body.vscode-high-contrast div.ExecutionVisualizer table.instTbl td {
+    border-bottom-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * classفْîinstanceغ╕صقأف╝عé
+ */
+body.vscode-light div.ExecutionVisualizer table.classTbl td.classVal,
+body.vscode-light div.ExecutionVisualizer table.instTbl td.instVal {
+    border-left-color: #888;
+}
+
+body.vscode-dark div.ExecutionVisualizer table.classTbl td.classVal,
+body.vscode-dark div.ExecutionVisualizer table.instTbl td.instVal {
+    border-left-color: #888;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer table.classTbl td.classVal,
+body.vscode-high-contrast div.ExecutionVisualizer table.instTbl td.instVal {
+    border-left-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * dictف╡îفàحفê░listعtupleعdictعinstغ╗حفèclassغ╕صقأك╛╣قـîكë▓عé
+ */
+body.vscode-light div.ExecutionVisualizer td.listElt table.dictTbl,
+body.vscode-light div.ExecutionVisualizer td.tupleElt table.dictTbl,
+body.vscode-light div.ExecutionVisualizer td.dictVal table.dictTbl,
+body.vscode-light div.ExecutionVisualizer td.instVal table.dictTbl,
+body.vscode-light div.ExecutionVisualizer td.classVal table.dictTbl {
+    border-color: #888;
+}
+
+body.vscode-dark div.ExecutionVisualizer td.listElt table.dictTbl,
+body.vscode-dark div.ExecutionVisualizer td.tupleElt table.dictTbl,
+body.vscode-dark div.ExecutionVisualizer td.dictVal table.dictTbl,
+body.vscode-dark div.ExecutionVisualizer td.instVal table.dictTbl,
+body.vscode-dark div.ExecutionVisualizer td.classVal table.dictTbl {
+    border-color: #888;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer td.listElt table.dictTbl,
+body.vscode-high-contrast div.ExecutionVisualizer td.tupleElt table.dictTbl,
+body.vscode-high-contrast div.ExecutionVisualizer td.dictVal table.dictTbl,
+body.vscode-high-contrast div.ExecutionVisualizer td.instVal table.dictTbl,
+body.vscode-high-contrast div.ExecutionVisualizer td.classVal table.dictTbl {
+    border-color: var(--vscode-contrastBorder);
+}
+
+/**
+ * لسءغ║«µبêف╕دغ╕صق«صفج┤قأك╡╖قé╣عµ£شك║سغ╗حفèق╗êقé╣
+ */
+body.vscode-light div.ExecutionVisualizer div.highlightedStackFrame circle {
+    fill: #005583;
+}
+body.vscode-light div.ExecutionVisualizer div.highlightedStackFrame path {
+    stroke: #005583;
+}
+body.vscode-light div.ExecutionVisualizer div.highlightedStackFrame path[class] {
+    stroke: #005583;
+    fill: #005583;
+}
+
+body.vscode-dark div.ExecutionVisualizer div.highlightedStackFrame circle {
+    fill: #005583;
+}
+body.vscode-dark div.ExecutionVisualizer div.highlightedStackFrame path {
+    stroke: #005583;
+}
+body.vscode-dark div.ExecutionVisualizer div.highlightedStackFrame path[class] {
+    stroke: #005583;
+    fill: #005583;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer div.highlightedStackFrame circle {
+    fill: #005583;
+}
+body.vscode-high-contrast div.ExecutionVisualizer div.highlightedStackFrame path {
+    stroke: #005583;
+}
+body.vscode-high-contrast div.ExecutionVisualizer div.highlightedStackFrame path[class] {
+    stroke: #005583;
+    fill: #005583;
+}
+
+/**
+ * لسءغ║«µبêف╕دغ╕صق«صفج┤قأك╡╖قé╣عµ£شك║سغ╗حفèق╗êقé╣
+ */
+body.vscode-light div.ExecutionVisualizer div.zombieStackFrame circle {
+    fill: #ccc;
+}
+body.vscode-light div.ExecutionVisualizer div.zombieStackFrame path {
+    stroke: #ccc;
+}
+body.vscode-light div.ExecutionVisualizer div.zombieStackFrame path[class] {
+    stroke: #ccc;
+    fill: #ccc;
+}
+
+body.vscode-dark div.ExecutionVisualizer div.zombieStackFrame circle {
+    fill: #ccc;
+}
+body.vscode-dark div.ExecutionVisualizer div.zombieStackFrame path {
+    stroke: #ccc;
+}
+body.vscode-dark div.ExecutionVisualizer div.zombieStackFrame path[class] {
+    stroke: #ccc;
+    fill: #ccc;
+}
+
+body.vscode-high-contrast div.ExecutionVisualizer div.zombieStackFrame circle {
+    fill: #ccc;
+}
+body.vscode-high-contrast div.ExecutionVisualizer div.zombieStackFrame path {
+    stroke: #ccc;
+}
+body.vscode-high-contrast div.ExecutionVisualizer div.zombieStackFrame path[class] {
+    stroke: #ccc;
+    fill: #ccc;
+}
