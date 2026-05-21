@@ -3046,6 +3046,83 @@ class DataVisualizer {
     else if (obj[0] == 'C_STRUCT' || obj[0] == 'C_ARRAY' || obj[0] === 'C_MULTIDIMENSIONAL_ARRAY') {
       myViz.renderCStructArray(obj, stepNum, d3DomElement);
     }
+    else if (obj[0] == 'BYTES') {
+      assert(obj.length == 3);
+      var typeName = obj[1];
+      var strRepr = htmlspecialchars(obj[2]);
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + typeName + '</div>');
+      d3DomElement.append('<table class="customObjTbl"><tr><td class="customObjElt" style="font-family: monospace;">' + strRepr + '</td></tr></table>');
+    }
+    else if (obj[0] == 'RANGE') {
+      assert(obj.length == 4);
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'range' + '</div>');
+      d3DomElement.append('<table class="customObjTbl"></table>');
+      var tbl = d3DomElement.children('table:last');
+      tbl.append('<tr><td class="dictKey">start</td><td class="dictVal">' + obj[1] + '</td></tr>');
+      tbl.append('<tr><td class="dictKey">stop</td><td class="dictVal">' + obj[2] + '</td></tr>');
+      tbl.append('<tr><td class="dictKey">step</td><td class="dictVal">' + obj[3] + '</td></tr>');
+    }
+    else if (obj[0] == 'COMPLEX') {
+      assert(obj.length == 3);
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'complex' + '</div>');
+      d3DomElement.append('<table class="customObjTbl"></table>');
+      var tbl = d3DomElement.children('table:last');
+      var realStr = $.isArray(obj[1]) ? obj[1][1] : obj[1];
+      var imagStr = $.isArray(obj[2]) ? obj[2][1] : obj[2];
+      tbl.append('<tr><td class="dictKey">real</td><td class="dictVal">' + realStr + '</td></tr>');
+      tbl.append('<tr><td class="dictKey">imag</td><td class="dictVal">' + imagStr + '</td></tr>');
+    }
+    else if (obj[0] == 'SLICE') {
+      assert(obj.length == 4);
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'slice' + '</div>');
+      d3DomElement.append('<table class="customObjTbl"></table>');
+      var tbl = d3DomElement.children('table:last');
+      var sliceLabels = ['start', 'stop', 'step'];
+      for (var si = 1; si <= 3; si++) {
+        var sv = obj[si] === null ? 'None' : obj[si];
+        tbl.append('<tr><td class="dictKey">' + sliceLabels[si-1] + '</td><td class="dictVal">' + sv + '</td></tr>');
+      }
+    }
+    else if (obj[0] == 'DEQUE') {
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'deque' + '</div>');
+      if (obj.length > 1) {
+        d3DomElement.append('<table class="listTbl"><tr></tr><tr></tr></table>');
+        var dtbl = d3DomElement.children('table');
+        var dheaderTr = dtbl.find('tr:first');
+        var dcontentTr = dtbl.find('tr:last');
+        $.each(obj, function(ind, val) {
+          if (ind < 1) return;
+          dheaderTr.append('<td class="listHeader">' + (ind - 1) + '</td>');
+          dcontentTr.append('<td class="listElt"></td>');
+          myViz.renderNestedObject(val, stepNum, dcontentTr.find('td:last'));
+        });
+      } else {
+        d3DomElement.append('<div class="nullObj">empty deque</div>');
+      }
+    }
+    else if (obj[0] == 'ARRAY') {
+      assert(obj.length >= 2);
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'array(' + htmlspecialchars(obj[1]) + ')</div>');
+      if (obj.length > 2) {
+        d3DomElement.append('<table class="listTbl"><tr></tr><tr></tr></table>');
+        var atbl = d3DomElement.children('table');
+        var aheaderTr = atbl.find('tr:first');
+        var acontentTr = atbl.find('tr:last');
+        $.each(obj, function(ind, val) {
+          if (ind < 2) return;
+          aheaderTr.append('<td class="listHeader">' + (ind - 2) + '</td>');
+          acontentTr.append('<td class="listElt"></td>');
+          myViz.renderNestedObject(val, stepNum, acontentTr.find('td:last'));
+        });
+      }
+    }
+    else if (obj[0] == 'ITERABLE') {
+      assert(obj.length == 3);
+      var itTypeName = obj[1];
+      var itStrRepr = htmlspecialchars(obj[2]);
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + itTypeName + '</div>');
+      d3DomElement.append('<table class="customObjTbl"><tr><td class="customObjElt">' + itStrRepr + '</td></tr></table>');
+    }
     else {
       // render custom data type
       assert(obj.length == 2);

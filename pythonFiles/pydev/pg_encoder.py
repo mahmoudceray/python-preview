@@ -73,10 +73,11 @@
 FLOAT_PRECISION = 4
 
 
-from collections import defaultdict
+from collections import defaultdict, deque
 import re, types
 import sys
 import math
+import array
 classRE = re.compile("<class '(.*)'>")
 
 import inspect
@@ -316,25 +317,44 @@ class ObjectEncoder:
 
             typ = type(dat)
 
-            if typ == list:
+            if isinstance(dat, list):
                 new_obj.append('LIST')
                 for e in dat:
                     new_obj.append(self.encode(e, get_parent))
-            elif typ == tuple:
+            elif isinstance(dat, tuple):
                 new_obj.append('TUPLE')
                 for e in dat:
                     new_obj.append(self.encode(e, get_parent))
-            elif typ == set:
+            elif isinstance(dat, (set, frozenset)):
                 new_obj.append('SET')
                 for e in dat:
                     new_obj.append(self.encode(e, get_parent))
-            elif typ == dict:
+            elif isinstance(dat, dict):
                 new_obj.append('DICT')
                 for (k, v) in dat.items():
                     # don't display some built-in locals ...
                     if k not in ('__module__', '__return__', '__locals__'):
                         new_obj.append([self.encode(k, get_parent), self.encode(v, get_parent)])
-            elif typ in (types.FunctionType, types.MethodType):
+            elif isinstance(dat, (bytes, bytearray)):
+                new_obj.extend(['BYTES', type(dat).__name__, repr(dat)])
+            elif isinstance(dat, range):
+                new_obj.extend(['RANGE', dat.start, dat.stop, dat.step])
+            elif isinstance(dat, complex):
+                new_obj.extend(['COMPLEX', self.encode(dat.real, get_parent), self.encode(dat.imag, get_parent)])
+            elif isinstance(dat, slice):
+                new_obj.extend(['SLICE', dat.start, dat.stop, dat.step])
+            elif isinstance(dat, deque):
+                new_obj.append('DEQUE')
+                for e in dat:
+                    new_obj.append(self.encode(e, get_parent))
+            elif isinstance(dat, array.array):
+                new_obj.append('ARRAY')
+                new_obj.append(dat.typecode)
+                for e in dat:
+                    new_obj.append(self.encode(e, get_parent))
+            elif isinstance(dat, (enumerate, zip, map, filter)) or type(dat).__name__ in ('reversed', 'list_reverseiterator', 'tuple_reverseiterator', 'str_reverseiterator'):
+                new_obj.extend(['ITERABLE', type(dat).__name__, repr(dat)])
+            elif isinstance(dat, (types.FunctionType, types.MethodType)):
                 argspec = inspect.getfullargspec(dat)
 
                 printed_args = [e for e in argspec.args]
@@ -462,3 +482,13 @@ class ObjectEncoder:
         for attr in user_attrs:
             if not self.should_hide_var(attr):
                 new_obj.append([self.encode(attr, None), self.encode(dat.__dict__[attr], None)])
+
+        # fallback: if instance has no user attributes and no pretty-print string, try repr()
+        if is_instance(dat) and not pprint_str and not user_attrs:
+            try:
+                r = repr(dat)
+                if not (r[0] == '<' and ' at 0x' in r):
+                    new_obj[0] = 'INSTANCE_PPRINT'
+                    new_obj.insert(2, r)
+            except Exception:
+                pass
