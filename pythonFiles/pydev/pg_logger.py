@@ -1524,6 +1524,26 @@ class PGLogger(bdb.Bdb):
         if scope_info:
             trace_entry['scope_info'] = scope_info
 
+        # Feature: Variable Diff (track added/changed/removed variables)
+        if not hasattr(self, '_prev_globals'):
+            self._prev_globals = {}
+
+        globals_diff = {}
+        for name, val in encoded_globals.items():
+            if name not in self._prev_globals:
+                globals_diff[name] = 'added'
+            elif val != self._prev_globals[name]:
+                globals_diff[name] = 'changed'
+        for name in self._prev_globals:
+            if name not in encoded_globals:
+                globals_diff[name] = 'removed'
+        self._prev_globals = dict(encoded_globals)
+        if globals_diff:
+            trace_entry['globals_diff'] = globals_diff
+
+        # Feature: Object identity - small_id list for heap objects
+        trace_entry['obj_ids'] = sorted([int(k) for k in self.encoder.encoded_heap_objects.keys()])
+
         # if there's an exception, then record its info:
         if event_type == 'exception':
             # always check in f_locals
@@ -1533,6 +1553,24 @@ class PGLogger(bdb.Bdb):
             caught_by = self._get_caught_by_except(lineno)
             if caught_by:
                 trace_entry['caught_by_except'] = 'line ' + str(caught_by[0]) + ': ' + caught_by[1]
+            # Feature: Full exception traceback chain
+            tb = exc[2]
+            if tb and tb.tb_next:  # only show if there are multiple frames
+                tb_chain = []
+                seen = set()
+                while tb:
+                    f = tb.tb_frame
+                    key = (f.f_code.co_filename, tb.tb_lineno, f.f_code.co_name)
+                    if key not in seen:
+                        seen.add(key)
+                        tb_chain.append({
+                            'filename': f.f_code.co_filename,
+                            'lineno': tb.tb_lineno,
+                            'function': f.f_code.co_name,
+                        })
+                    tb = tb.tb_next
+                if len(tb_chain) > 1:
+                    trace_entry['exception_trace'] = tb_chain
 
         # append to the trace only the breakpoint line and the next
         # executed line, so that if you set only ONE breakpoint, OPT shows
