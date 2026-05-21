@@ -634,6 +634,120 @@ class PGLogger(bdb.Bdb):
     def get_script_line(self, n):
         return self.executed_script_lines[n - 1]
 
+    def _detect_matched_case(self, lineno):
+        """Return the matched case pattern text if lineno is inside a case body."""
+        try:
+            curr_line = self.get_script_line(lineno)
+        except IndexError:
+            return None
+        curr_indent = len(curr_line) - len(curr_line.lstrip())
+        for i in range(lineno - 2, max(lineno - 30, -1), -1):
+            try:
+                src_line = self.executed_script_lines[i]
+            except IndexError:
+                continue
+            stripped = src_line.strip()
+            if stripped.startswith('case ') and stripped.endswith(':'):
+                case_indent = len(src_line) - len(src_line.lstrip())
+                if case_indent <= curr_indent:
+                    return stripped[:-1]
+        return None
+
+    def _find_try_except_ranges(self):
+        """Pre-parse source to find try/except block structures."""
+        self._try_except_ranges = []
+        lines = self.executed_script_lines
+        n = len(lines)
+        i = 0
+        while i < n:
+            line = lines[i]
+            stripped = line.strip()
+            if stripped == 'try:':
+                try_indent = len(line) - len(line.lstrip())
+                try_lineno = i + 1
+                except_clauses = []
+                j = i + 1
+                while j < n:
+                    l = lines[j]
+                    if not l.strip():
+                        j += 1
+                        continue
+                    li = len(l) - len(l.lstrip())
+                    if li < try_indent:
+                        break
+                    if li == try_indent:
+                        s = l.strip()
+                        if s.startswith('except'):
+                            except_clauses.append((j + 1, s))
+                        elif s == 'finally:':
+                            break  # finally doesn't catch, stop scanning
+                        else:
+                            break
+                    j += 1
+                if except_clauses:
+                    self._try_except_ranges.append({
+                        'try_lineno': try_lineno,
+                        'try_indent': try_indent,
+                        'except_clauses': except_clauses,
+                    })
+            i += 1
+
+    def _get_caught_by_except(self, lineno):
+        """Return (except_lineno, except_text) for the except catching lineno, or None."""
+        if not hasattr(self, '_try_except_ranges'):
+            self._find_try_except_ranges()
+        for block in reversed(self._try_except_ranges):
+            first_except = block['except_clauses'][0]
+            try_body_start = block['try_lineno'] + 1
+            try_body_end = first_except[0] - 1
+            if try_body_start <= lineno <= try_body_end:
+                return first_except
+        return None
+
+    def _is_in_loop_else(self, lineno):
+        """Check if lineno falls within a loop's else block."""
+        if not hasattr(self, '_loop_else_ranges'):
+            self._find_loop_else_ranges()
+        for start, end in self._loop_else_ranges:
+            if start <= lineno <= end:
+                return True
+        return False
+
+    def _find_loop_else_ranges(self):
+        """Pre-parse source to find for/while/else block line ranges."""
+        self._loop_else_ranges = []
+        lines = self.executed_script_lines
+        n = len(lines)
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith('for ') or stripped.startswith('while '):
+                # Find matching else: at same indentation
+                loop_indent = len(line) - len(line.lstrip())
+                for j in range(i + 1, n):
+                    next_line = lines[j]
+                    if not next_line.strip():
+                        continue
+                    next_indent = len(next_line) - len(next_line.lstrip())
+                    if next_indent <= loop_indent:
+                        # Back to loop level or less - check for else
+                        if next_line.strip() == 'else:':
+                            else_indent = next_indent
+                            # Find the end of the else block
+                            else_start = j + 2  # 1-indexed, first body line
+                            else_end = else_start
+                            for k in range(j + 1, n):
+                                body_line = lines[k]
+                                body_indent = len(body_line) - len(body_line.lstrip())
+                                if not body_line.strip():
+                                    continue
+                                if body_indent <= else_indent:
+                                    break
+                                else_end = k + 1  # 1-indexed
+                            self._loop_else_ranges.append((else_start, else_end))
+                        break
+                    if next_indent <= loop_indent:
+                        break
+
     # General interaction function
 
     def interaction(self, frame, traceback, event_type):
@@ -1080,11 +1194,25 @@ class PGLogger(bdb.Bdb):
         if topframe_module != "__main__":
             trace_entry['custom_module_name'] = topframe_module
 
+        # Phase 4: Control flow annotations
+        if event_type == 'step_line':
+            # Match/case detection
+            matched_case = self._detect_matched_case(lineno)
+            if matched_case:
+                trace_entry['matched_case'] = matched_case
+            # Loop else detection
+            if self._is_in_loop_else(lineno):
+                trace_entry['loop_else'] = True
+
         # if there's an exception, then record its info:
         if event_type == 'exception':
             # always check in f_locals
             exc = frame.f_locals['__exception__']
             trace_entry['exception_msg'] = exc[0].__name__ + ': ' + str(exc[1])
+            # Phase 4.2: Show which except clause caught it
+            caught_by = self._get_caught_by_except(lineno)
+            if caught_by:
+                trace_entry['caught_by_except'] = 'line ' + str(caught_by[0]) + ': ' + caught_by[1]
 
         # append to the trace only the breakpoint line and the next
         # executed line, so that if you set only ONE breakpoint, OPT shows

@@ -93,7 +93,7 @@ export class ExecutionVisualizer {
   // - functions should be nested within heap objects since that's a more
   //   intuitive rendering for methods (i.e., functions within objects)
   // - lots of special cases for function/property-like python types that we should inline
-  static DEFAULT_ALWAYS_NEST_TYPES = ['FUNCTION', 'JS_FUNCTION',
+  static DEFAULT_ALWAYS_NEST_TYPES = ['FUNCTION', 'JS_FUNCTION', 'GENERATOR', 'COROUTINE', 'ASYNC_GENERATOR',
                                       'property', 'classmethod', 'staticmethod', 'builtin_function_or_method',
                                       'member_descriptor', 'getset_descriptor', 'method_descriptor', 'wrapper_descriptor'];
 
@@ -157,6 +157,7 @@ export class ExecutionVisualizer {
   prevLineNumber: number;
   curLineNumber: number;
   curLineExceptionMsg: string;
+  curLineControlFlowAnnotation: string;
 
   // true iff trace ended prematurely since maximum instruction limit has
   // been reached
@@ -735,6 +736,13 @@ export class ExecutionVisualizer {
       myViz.navControls.showError(null);
     }
 
+    // render control flow annotation (if applicable):
+    if (myViz.curLineControlFlowAnnotation) {
+      myViz.navControls.showAnnotation(myViz.curLineControlFlowAnnotation);
+    } else {
+      myViz.navControls.showAnnotation(null);
+    }
+
     // finally, render all of the data structures
     this.dataViz.renderDataStructures(this.curInstr);
 
@@ -1027,78 +1035,27 @@ export class ExecutionVisualizer {
     myViz.curLineIsReturn = undefined;
     myViz.prevLineIsReturn = undefined;
     myViz.curLineExceptionMsg = undefined;
-
-    /* if instrLimitReached, then treat like a normal non-terminating line */
+    myViz.curLineControlFlowAnnotation = undefined;
     var isTerminated = (!myViz.instrLimitReached && isLastInstr);
-
-    var curLineNumber = null;
     var prevLineNumber = null;
-
     var curEntry = myViz.curTrace[myViz.curInstr];
-
+    var curLineNumber = null;
     var curIsReturn = (curEntry.event == 'return');
     var prevIsReturn = false;
-
-    if (myViz.curInstr > 0) {
-      prevLineNumber = myViz.curTrace[myViz.curInstr - 1].line;
-      prevIsReturn = (myViz.curTrace[myViz.curInstr - 1].event == 'return');
-
-      /* kinda nutsy hack: if the previous line is a return line, don't
-         highlight it. instead, highlight the line in the enclosing
-         function that called this one (i.e., the call site). e.g.,:
-
-         1. def foo(lst):
-         2.   return len(lst)
-         3.
-         4. y = foo([1,2,3])
-         5. print y
-
-         If prevLineNumber is 2 and prevIsReturn, then curLineNumber is
-         5, since that's the line that executes right after line 2
-         finishes. However, this looks confusing to the user since what
-         actually happened here was that the return value of foo was
-         assigned to y on line 4. I want to have prevLineNumber be line
-         4 so that it gets highlighted. There's no ideal solution, but I
-         think that looks more sensible, since line 4 was the previous
-         line that executed *in this function's frame*.
-      */
-      if (prevIsReturn) {
-        var idx = myViz.curInstr - 1;
-        var retStack = myViz.curTrace[idx].stack_to_render;
-        // retStack.length == 0 in rare cases such as inside of an
-        // exec() statement. #weird
-        if (retStack.length > 0) {
-          var retFrameId = retStack[retStack.length - 1].frame_id;
-
-          // now go backwards until we find a 'call' to this frame
-          while (idx >= 0) {
-            var entry = myViz.curTrace[idx];
-            if (entry.event == 'call' && entry.stack_to_render) {
-              var topFrame = entry.stack_to_render[entry.stack_to_render.length - 1];
-              if (topFrame.frame_id == retFrameId) {
-                break; // DONE, we found the call that corresponds to this return
-              }
-            }
-            idx--;
-          }
-
-          // now idx is the index of the 'call' entry. we need to find the
-          // entry before that, which is the instruction before the call.
-          // THAT's the line of the call site.
-          if (idx > 0) {
-            var callingEntry = myViz.curTrace[idx - 1];
-            prevLineNumber = callingEntry.line; // WOOHOO!!!
-            prevIsReturn = false; // this is now a call site, not a return
-          }
-        }
-      }
-    }
-
     var hasError = false;
     if (curEntry.event === 'exception' || curEntry.event === 'uncaught_exception') {
       assert(curEntry.exception_msg);
       hasError = true;
       myViz.curLineExceptionMsg = curEntry.exception_msg;
+    }
+
+    // Phase 4: Control flow annotations
+    if (curEntry.event === 'exception' && curEntry.caught_by_except) {
+      myViz.curLineControlFlowAnnotation = '✓ caught by ' + curEntry.caught_by_except;
+    } else if (curEntry.matched_case) {
+      myViz.curLineControlFlowAnnotation = '✓ ' + curEntry.matched_case;
+    } else if (curEntry.loop_else) {
+      myViz.curLineControlFlowAnnotation = '✓ loop else';
     }
 
     curLineNumber = curEntry.line;
@@ -1434,7 +1391,8 @@ class DataVisualizer {
         }
         else if (heapObj[0] == 'INSTANCE' || heapObj[0] == 'INSTANCE_PPRINT' || heapObj[0] == 'CLASS') {
           jQuery.each(heapObj, function(ind, child) {
-            var headerLength = (heapObj[0] == 'INSTANCE') ? 2 : 3;
+            var isCls = (heapObj[0] == 'CLASS');
+            var headerLength = (heapObj[0] == 'INSTANCE') ? 2 : (isCls && heapObj.length > 3 && $.isArray(heapObj[3]) ? 4 : 3);
             if (ind < headerLength) return;
 
             var instKey = child[0];
@@ -1457,17 +1415,27 @@ class DataVisualizer {
             }
           });
         }
-        else if (heapObj[0] == 'FUNCTION' || heapObj[0] == 'JS_FUNCTION') {
+        else if (heapObj[0] == 'FUNCTION' || heapObj[0] == 'JS_FUNCTION' || heapObj[0] == 'STATICMETHOD' || heapObj[0] == 'CLASSMETHOD' || heapObj[0] == 'PROPERTY') {
           // a Python function object has an optional element at index=3
-          // (zero-indexed) that represents default arg names/values
+          // (zero-indexed) that represents default arg names/values or a dict
           //
           // a JavaScript function object has funcProperties that we should
           // recurse into in order to precompute their layouts
           var funcProperties = null;
           // traverse into default argument values to precompute their
           // layouts, if applicable
-          if (heapObj[0] == 'FUNCTION' && heapObj.length > 3) {
-            funcProperties = heapObj[3];
+          if ((heapObj[0] == 'FUNCTION' || heapObj[0] == 'STATICMETHOD' || heapObj[0] == 'CLASSMETHOD') && heapObj.length > 1) {
+            // For STATICMETHOD/CLASSMETHOD, the value is at index 1
+            if (heapObj[0] == 'FUNCTION') {
+              if (heapObj.length > 3) {
+                var extra = heapObj[3];
+                if ($.isArray(extra) && extra.length > 0 && $.isArray(extra[0])) {
+                  funcProperties = extra; // old array format
+                } else if (typeof extra === 'object' && extra.defaults) {
+                  funcProperties = extra.defaults; // new dict format
+                }
+              }
+            }
           }
           if (heapObj[0] == 'JS_FUNCTION') {
             assert(heapObj.length == 5);
@@ -2866,7 +2834,8 @@ class DataVisualizer {
     else if (obj[0] == 'INSTANCE' || obj[0] == 'INSTANCE_PPRINT' || obj[0] == 'CLASS') {
       var isInstance = (obj[0] == 'INSTANCE');
       var isPprintInstance = (obj[0] == 'INSTANCE_PPRINT');
-      var headerLength = isInstance ? 2 : 3;
+      var isClass = (obj[0] == 'CLASS');
+      var headerLength = isInstance ? 2 : (isClass && obj.length > 3 && $.isArray(obj[3]) ? 4 : 3);
 
       assert(obj.length >= headerLength);
 
@@ -2882,6 +2851,10 @@ class DataVisualizer {
         }
         d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + obj[1] + ' class ' + superclassStr +
                             '<br/>' + '<a href="javascript:void(0)" id="attrToggleLink">hide attributes</a>' + '</div>');
+        // Show full MRO if available
+        if (headerLength >= 4 && $.isArray(obj[3]) && obj[3].length > 0) {
+          d3DomElement.append('<div class="typeLabel" style="font-size: smaller;">MRO: ' + htmlspecialchars(obj[3].join(' → ')) + '</div>');
+        }
       }
 
       // right now, let's NOT display class members, since that clutters
@@ -2910,6 +2883,20 @@ class DataVisualizer {
           if (typeof kvPair[0] == "string") {
             // common case ...
             var attrnameStr = htmlspecialchars(kvPair[0]);
+
+            // Special rendering for synthetic entries
+            if (attrnameStr === '__abstractmethods__' && $.isArray(kvPair[1])) {
+              keyTd.append('<span class="abcKey">' + attrnameStr + '</span>');
+              valTd.append('<span class="abcVal">' + htmlspecialchars(kvPair[1].join(', ')) + '</span>');
+              newRow.find('td').css('font-style', 'italic');
+              return;
+            }
+            if (attrnameStr === '@dataclass fields' && $.isArray(kvPair[1])) {
+              keyTd.append('<span class="keyObj">' + attrnameStr + '</span>');
+              valTd.append('<span class="dataclassVal">' + htmlspecialchars(kvPair[1].join(', ')) + '</span>');
+              return;
+            }
+
             keyTd.append('<span class="keyObj">' + attrnameStr + '</span>');
           }
           else {
@@ -2954,6 +2941,63 @@ class DataVisualizer {
         }
       }
     }
+    else if (obj[0] == 'GENERATOR') {
+      assert(obj.length == 3);
+      var genState = obj[1];
+      var genDetails = obj[2];
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'generator</div>');
+      d3DomElement.append('<div class="funcObj"><span class="generatorState">' + genState + '</span></div>');
+      if (genDetails) {
+        d3DomElement.append('<table class="customObjTbl"></table>');
+        var tbl = d3DomElement.children('table:last');
+        if (genDetails.code_name) {
+          tbl.append('<tr><td class="dictKey">name</td><td class="dictVal">' + htmlspecialchars(genDetails.code_name) + '</td></tr>');
+        }
+        if (genDetails.lineno) {
+          tbl.append('<tr><td class="dictKey">line</td><td class="dictVal">' + genDetails.lineno + '</td></tr>');
+        }
+        if (genDetails.yieldfrom) {
+          tbl.append('<tr><td class="dictKey">yield from</td><td class="dictVal">' + htmlspecialchars(genDetails.yieldfrom) + '</td></tr>');
+        }
+      }
+    }
+    else if (obj[0] == 'COROUTINE') {
+      assert(obj.length == 3);
+      var coroState = obj[1];
+      var coroDetails = obj[2];
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'coroutine</div>');
+      d3DomElement.append('<div class="funcObj"><span class="generatorState">' + coroState + '</span></div>');
+      if (coroDetails) {
+        d3DomElement.append('<table class="customObjTbl"></table>');
+        var tbl = d3DomElement.children('table:last');
+        if (coroDetails.code_name) {
+          tbl.append('<tr><td class="dictKey">name</td><td class="dictVal">' + htmlspecialchars(coroDetails.code_name) + '</td></tr>');
+        }
+        if (coroDetails.lineno) {
+          tbl.append('<tr><td class="dictKey">line</td><td class="dictVal">' + coroDetails.lineno + '</td></tr>');
+        }
+        if (coroDetails.await) {
+          tbl.append('<tr><td class="dictKey">await</td><td class="dictVal">' + htmlspecialchars(coroDetails.await) + '</td></tr>');
+        }
+      }
+    }
+    else if (obj[0] == 'ASYNC_GENERATOR') {
+      assert(obj.length == 3);
+      var agState = obj[1];
+      var agDetails = obj[2];
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'async generator</div>');
+      d3DomElement.append('<div class="funcObj"><span class="generatorState">' + agState + '</span></div>');
+      if (agDetails) {
+        d3DomElement.append('<table class="customObjTbl"></table>');
+        var tbl = d3DomElement.children('table:last');
+        if (agDetails.code_name) {
+          tbl.append('<tr><td class="dictKey">name</td><td class="dictVal">' + htmlspecialchars(agDetails.code_name) + '</td></tr>');
+        }
+        if (agDetails.lineno) {
+          tbl.append('<tr><td class="dictKey">line</td><td class="dictVal">' + agDetails.lineno + '</td></tr>');
+        }
+      }
+    }
     else if (obj[0] == 'FUNCTION') {
       assert(obj.length == 3 || obj.length == 4);
 
@@ -2977,20 +3021,57 @@ class DataVisualizer {
         d3DomElement.append('<div class="funcObj">' + funcPrefix + ' ' + funcName + '</div>');
       }
 
-      // render default argument names/values (see ../pg_encoder.py)
       if (obj.length > 3) {
-        var funcProperties = obj[3];
-        assert(funcProperties.length > 0);
+        var funcExtra = obj[3];
+        if ($.isArray(funcExtra) && funcExtra.length > 0 && $.isArray(funcExtra[0])) {
+          // old format: array of default argument pairs
+          renderFuncDefaults(funcExtra);
+        } else if (typeof funcExtra === 'object') {
+          // new format: details dict
+          if (funcExtra.defaults) {
+            renderFuncDefaults(funcExtra.defaults);
+          }
+          if (funcExtra.has_wrapped) {
+            d3DomElement.append('<div class="typeLabel" style="margin-top: 3px;">wrapped (decorated)</div>');
+          }
+          if (funcExtra.closure) {
+            d3DomElement.append('<div class="typeLabel" style="margin-top: 3px;">closure variables:</div>');
+            d3DomElement.append('<table class="instTbl"></table>');
+            var ctbl = d3DomElement.children('table:last');
+            $.each(funcExtra.closure, function(ind, kvPair) {
+              ctbl.append('<tr class="instEntry"><td class="instKey"></td><td class="instVal"></td></tr>');
+              var newRow = ctbl.find('tr:last');
+              newRow.find('td:first').append('<span class="keyObj">' + htmlspecialchars(kvPair[0]) + '</span>');
+              myViz.renderNestedObject(kvPair[1], stepNum, newRow.find('td:last'));
+            });
+          }
+          if (funcExtra.code) {
+            d3DomElement.append('<div class="typeLabel" style="margin-top: 3px;">code:</div>');
+            d3DomElement.append('<table class="customObjTbl"></table>');
+            var ctbl = d3DomElement.children('table:last');
+            ctbl.append('<tr><td class="dictKey">locals</td><td class="dictVal">' + htmlspecialchars((funcExtra.code.varnames || []).join(', ')) + '</td></tr>');
+            ctbl.append('<tr><td class="dictKey">nlocals</td><td class="dictVal">' + (funcExtra.code.nlocals || 0) + '</td></tr>');
+            ctbl.append('<tr><td class="dictKey">freevars</td><td class="dictVal">' + htmlspecialchars((funcExtra.code.freevars || []).join(', ') || 'none') + '</td></tr>');
+            ctbl.append('<tr><td class="dictKey">file</td><td class="dictVal">' + htmlspecialchars(funcExtra.code.filename || '') + '</td></tr>');
+          }
+          if (funcExtra.globals_keys) {
+            d3DomElement.append('<div class="typeLabel" style="margin-top: 3px;">globals (' + funcExtra.globals_keys.length + '):</div>');
+            var gstr = htmlspecialchars(funcExtra.globals_keys.join(', '));
+            d3DomElement.append('<table class="customObjTbl"><tr><td class="customObjElt">' + gstr + '</td></tr></table>');
+          }
+        }
+      }
+
+      function renderFuncDefaults(defaultsList) {
+        assert(defaultsList.length > 0);
         d3DomElement.append('<div class="typeLabel" style="margin-top: 3px;">default arguments:</div>');
         d3DomElement.append('<table class="instTbl"></table>');
-        var tbl = d3DomElement.children('table');
-        $.each(funcProperties, function(ind, kvPair) {
+        var tbl = d3DomElement.children('table:last');
+        $.each(defaultsList, function(ind, kvPair) {
           tbl.append('<tr class="instEntry"><td class="instKey"></td><td class="instVal"></td></tr>');
           var newRow = tbl.find('tr:last');
-          var keyTd = newRow.find('td:first');
-          var valTd = newRow.find('td:last');
-          keyTd.append('<span class="keyObj">' + htmlspecialchars(kvPair[0]) + '</span>');
-          myViz.renderNestedObject(kvPair[1], stepNum, valTd);
+          newRow.find('td:first').append('<span class="keyObj">' + htmlspecialchars(kvPair[0]) + '</span>');
+          myViz.renderNestedObject(kvPair[1], stepNum, newRow.find('td:last'));
         });
       }
     }
@@ -3030,6 +3111,38 @@ class DataVisualizer {
       else {
         // compact form:
         d3DomElement.append('<pre class="funcCode">' + funcCode + '</pre>');
+      }
+    }
+    else if (obj[0] == 'STATICMETHOD') {
+      assert(obj.length == 2);
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'staticmethod' + '</div>');
+      myViz.renderNestedObject(obj[1], stepNum, d3DomElement);
+    }
+    else if (obj[0] == 'CLASSMETHOD') {
+      assert(obj.length == 2);
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'classmethod' + '</div>');
+      myViz.renderNestedObject(obj[1], stepNum, d3DomElement);
+    }
+    else if (obj[0] == 'PROPERTY') {
+      assert(obj.length == 2);
+      var propData = obj[1];
+      d3DomElement.append('<div class="typeLabel">' + typeLabelPrefix + 'property: ' + htmlspecialchars(propData.name) + '</div>');
+      d3DomElement.append('<table class="customObjTbl"></table>');
+      var tbl = d3DomElement.children('table:last');
+      if (propData.fget) {
+        tbl.append('<tr><td class="dictKey">getter</td><td class="dictVal"></td></tr>');
+        myViz.renderNestedObject(propData.fget, stepNum, tbl.find('tr:last td:last'));
+      }
+      if (propData.fset) {
+        tbl.append('<tr><td class="dictKey">setter</td><td class="dictVal"></td></tr>');
+        myViz.renderNestedObject(propData.fset, stepNum, tbl.find('tr:last td:last'));
+      }
+      if (propData.fdel) {
+        tbl.append('<tr><td class="dictKey">deleter</td><td class="dictVal"></td></tr>');
+        myViz.renderNestedObject(propData.fdel, stepNum, tbl.find('tr:last td:last'));
+      }
+      if (propData.doc) {
+        tbl.append('<tr><td class="dictKey">doc</td><td class="dictVal">' + htmlspecialchars(propData.doc) + '</td></tr>');
       }
     }
     else if (obj[0] == 'HEAP_PRIMITIVE') {
@@ -3755,8 +3868,9 @@ class NavigationController {
                        <button id="jmpStepFwd", type="button">Forward &gt;</button>\
                        <button id="jmpLastInstr", type="button">Last &gt;&gt;</button>\
                      </div>\
-                     <div id="errorOutput" style="word-wrap: break-word; word-break: normal;"/>\
-                   </div>';
+                      <div id="errorOutput" style="word-wrap: break-word; word-break: normal;"/>\
+                      <div id="controlFlowAnnotation" style="word-wrap: break-word; word-break: normal;"/>\
+                    </div>';
 
     this.domRoot.append(navHTML);
 
@@ -3887,6 +4001,14 @@ class NavigationController {
       <span style="font-size: 9pt; color: #666">(see <a href="https://github.com/pgbovine/OnlinePythonTutor/blob/master/unsupported-features.md" target="_blank">unsupported features</a>)</span>`).show();
     } else {
       this.domRoot.find("#errorOutput").hide();
+    }
+  }
+
+  showAnnotation(msg: string) {
+    if (msg) {
+      this.domRoot.find("#controlFlowAnnotation").html('<span style="color: #2e7d32; font-weight: bold;">' + htmlspecialchars(msg) + '</span>').show();
+    } else {
+      this.domRoot.find("#controlFlowAnnotation").hide();
     }
   }
 

@@ -354,6 +354,77 @@ class ObjectEncoder:
                     new_obj.append(self.encode(e, get_parent))
             elif isinstance(dat, (enumerate, zip, map, filter)) or type(dat).__name__ in ('reversed', 'list_reverseiterator', 'tuple_reverseiterator', 'str_reverseiterator'):
                 new_obj.extend(['ITERABLE', type(dat).__name__, repr(dat)])
+            elif isinstance(dat, types.GeneratorType):
+                state = 'suspended'
+                if dat.gi_frame is None:
+                    state = 'exhausted'
+                elif dat.gi_running:
+                    state = 'running'
+                details = {}
+                details['code_name'] = dat.gi_code.co_name
+                details['lineno'] = dat.gi_code.co_firstlineno
+                if dat.gi_yieldfrom is not None:
+                    details['yieldfrom'] = repr(dat.gi_yieldfrom)
+                new_obj.append('GENERATOR')
+                new_obj.append(state)
+                if details:
+                    new_obj.append(details)
+            elif isinstance(dat, types.CoroutineType):
+                state = 'suspended'
+                if dat.cr_frame is None:
+                    state = 'finished'
+                elif dat.cr_running:
+                    state = 'running'
+                details = {}
+                details['code_name'] = dat.cr_code.co_name
+                details['lineno'] = dat.cr_code.co_firstlineno
+                if dat.cr_await is not None:
+                    details['await'] = repr(dat.cr_await)
+                new_obj.append('COROUTINE')
+                new_obj.append(state)
+                if details:
+                    new_obj.append(details)
+            elif isinstance(dat, types.AsyncGeneratorType):
+                state = 'suspended'
+                if dat.ag_frame is None:
+                    state = 'exhausted'
+                elif dat.ag_running:
+                    state = 'running'
+                details = {}
+                details['code_name'] = dat.ag_code.co_name
+                details['lineno'] = dat.ag_code.co_firstlineno
+                new_obj.append('ASYNC_GENERATOR')
+                new_obj.append(state)
+                if details:
+                    new_obj.append(details)
+            elif isinstance(dat, staticmethod):
+                wrapped = dat.__func__
+                if wrapped:
+                    new_obj.append('STATICMETHOD')
+                    new_obj.append(self.encode(wrapped, get_parent))
+                else:
+                    new_obj.extend(['STATICMETHOD', None])
+            elif isinstance(dat, classmethod):
+                wrapped = dat.__func__
+                if wrapped:
+                    new_obj.append('CLASSMETHOD')
+                    new_obj.append(self.encode(wrapped, get_parent))
+                else:
+                    new_obj.extend(['CLASSMETHOD', None])
+            elif isinstance(dat, property):
+                prop_info = {}
+                prop_info['name'] = dat.fget.__name__ if dat.fget else '?'
+                if dat.fget:
+                    prop_info['fget'] = self.encode(dat.fget, get_parent)
+                if dat.fset:
+                    prop_info['fset'] = self.encode(dat.fset, get_parent)
+                if dat.fdel:
+                    prop_info['fdel'] = self.encode(dat.fdel, get_parent)
+                prop_doc = dat.__doc__
+                if prop_doc and prop_doc != prop_info['name']:
+                    prop_info['doc'] = prop_doc
+                new_obj.append('PROPERTY')
+                new_obj.append(prop_info)
             elif isinstance(dat, (types.FunctionType, types.MethodType)):
                 argspec = inspect.getfullargspec(dat)
 
@@ -408,9 +479,56 @@ class ObjectEncoder:
                     enclosing_frame_id = get_parent(dat)
                     encoded_val[2] = enclosing_frame_id
                 new_obj.extend(encoded_val)
-                # OPTIONAL!!!
+
+                # Build optional details dict (backward-compatible)
+                details = {}
                 if default_arg_names_and_vals:
-                    new_obj.append(default_arg_names_and_vals)  # *append* it as a single list element
+                    details['defaults'] = default_arg_names_and_vals
+
+                # Closure info: free variables and their cell values
+                if hasattr(dat, '__closure__') and dat.__closure__:
+                    freevars = dat.__code__.co_freevars
+                    closure_cells = dat.__closure__
+                    closure_vars = []
+                    for i, cell in enumerate(closure_cells):
+                        if i < len(freevars):
+                            try:
+                                closure_vars.append((freevars[i], self.encode(cell.cell_contents, get_parent)))
+                            except ValueError:
+                                pass
+                    if closure_vars:
+                        details['closure'] = closure_vars
+
+                # Code object info
+                code = dat.__code__
+                details['code'] = {
+                    'varnames': list(code.co_varnames),
+                    'nlocals': code.co_nlocals,
+                    'filename': code.co_filename,
+                    'name': code.co_name,
+                    'freevars': list(code.co_freevars),
+                    'argcount': code.co_argcount,
+                    'kwonlyargcount': code.co_kwonlyargcount,
+                    'consts': [repr(c) if isinstance(c, (int, float, str, bool, type(None))) else type(c).__name__ for c in code.co_consts[:15]]
+                }
+
+                # Globals info (limited to keys for reference)
+                try:
+                    gkeys = list(dat.__globals__.keys())[:30]
+                    details['globals_keys'] = gkeys
+                except Exception:
+                    pass
+
+                # Decorator info
+                if hasattr(dat, '__wrapped__'):
+                    details['has_wrapped'] = True
+
+                if details:
+                    # Use dict format if any non-defaults info exists, otherwise array for backward compat
+                    if len(details) == 1 and 'defaults' in details:
+                        new_obj.append(details['defaults'])
+                    else:
+                        new_obj.append(details)
 
             elif typ is types.BuiltinFunctionType:
                 pretty_name = get_name(dat) + '(...)'
@@ -467,21 +585,49 @@ class ObjectEncoder:
             if class_name == 'module':
                 return
         else:
+            # Use full MRO chain instead of just __bases__
+            mro_names = [e.__name__ for e in dat.__mro__ if e is not dat and e is not object]
             superclass_names = [e.__name__ for e in dat.__bases__ if e is not object]
             new_obj.extend(['CLASS', get_name(dat), superclass_names])
+            new_obj.append(mro_names)
 
         # traverse inside of its __dict__ to grab attributes
         # (filter out useless-seeming ones, based on anecdotal observation):
         hidden = ('__doc__', '__module__', '__return__', '__dict__',
             '__locals__', '__weakref__', '__qualname__')
+        user_attrs = []
         if hasattr(dat, '__dict__'):
-            user_attrs = sorted([e for e in dat.__dict__ if e not in hidden])
-        else:
-            user_attrs = []
+            user_attrs = [e for e in dat.__dict__ if e not in hidden]
+
+        # Also include __slots__ attributes for instances
+        if is_instance(dat):
+            try:
+                slots = getattr(type(dat), '__slots__', ())
+                if isinstance(slots, str):
+                    slots = (slots,)
+                for slot in slots:
+                    if slot not in hidden and slot not in user_attrs and hasattr(dat, slot):
+                        user_attrs.append(slot)
+            except Exception:
+                pass
+
+        user_attrs.sort()
 
         for attr in user_attrs:
             if not self.should_hide_var(attr):
-                new_obj.append([self.encode(attr, None), self.encode(dat.__dict__[attr], None)])
+                if hasattr(dat, '__dict__') and attr in dat.__dict__:
+                    new_obj.append([self.encode(attr, None), self.encode(dat.__dict__[attr], None)])
+                else:
+                    new_obj.append([self.encode(attr, None), self.encode(getattr(dat, attr), None)])
+
+        # ABC info for classes
+        if is_class(dat) and hasattr(dat, '__abstractmethods__') and dat.__abstractmethods__:
+            new_obj.append(['__abstractmethods__', list(dat.__abstractmethods__)])
+
+        # Dataclass info
+        if is_class(dat) and hasattr(dat, '__dataclass_fields__'):
+            fields = list(dat.__dataclass_fields__.keys())
+            new_obj.append(['@dataclass fields', fields])
 
         # fallback: if instance has no user attributes and no pretty-print string, try repr()
         if is_instance(dat) and not pprint_str and not user_attrs:
