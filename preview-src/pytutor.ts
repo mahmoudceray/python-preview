@@ -1058,6 +1058,17 @@ export class ExecutionVisualizer {
       myViz.curLineControlFlowAnnotation = '✓ loop else';
     }
 
+    // Phase 5: Comprehension annotation
+    if (curEntry.comprehension) {
+      var comp = curEntry.comprehension;
+      var nestedStr = comp.nesting_level > 0 ? ' (nested, level ' + comp.nesting_level + ')' : '';
+      if (comp.type === 'genexpr') {
+        myViz.curLineControlFlowAnnotation = '◉ generator expression' + nestedStr + ': ' + comp.source;
+      } else {
+        myViz.curLineControlFlowAnnotation = '◉ ' + comp.type + nestedStr + ': ' + comp.source;
+      }
+    }
+
     curLineNumber = curEntry.line;
 
     // edge case for the final instruction :0

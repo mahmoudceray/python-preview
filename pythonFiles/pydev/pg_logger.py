@@ -37,6 +37,7 @@ import re
 import traceback
 import types
 import io
+import ast  # for comprehension detection
 
 import pg_encoder
 
@@ -704,6 +705,50 @@ class PGLogger(bdb.Bdb):
                 return first_except
         return None
 
+    def _find_comprehensions(self):
+        """Pre-parse source AST to find comprehensions and their nesting."""
+        self._comprehensions = []
+        try:
+            tree = ast.parse(self.executed_script)
+            self._collect_comprehensions(tree, 0)
+        except SyntaxError:
+            pass
+
+    def _collect_comprehensions(self, node, depth):
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+                comp_type = {
+                    'ListComp': 'listcomp',
+                    'SetComp': 'setcomp',
+                    'DictComp': 'dictcomp',
+                    'GeneratorExp': 'genexpr'
+                }.get(type(child).__name__, 'comprehension')
+                src = ast.get_source_segment(self.executed_script, child) or ''
+                self._comprehensions.append({
+                    'type': comp_type,
+                    'lineno': child.lineno,
+                    'end_lineno': getattr(child, 'end_lineno', child.lineno),
+                    'depth': depth,
+                    'source': src.strip(),
+                })
+                self._collect_comprehensions(child, depth + 1)
+            else:
+                self._collect_comprehensions(child, depth)
+
+    def _detect_comprehension(self, lineno):
+        """Detect if current line is inside a comprehension (AST-based for inlined comps)."""
+        if not hasattr(self, '_comprehensions'):
+            self._find_comprehensions()
+        matching = [c for c in self._comprehensions if c['lineno'] <= lineno <= c['end_lineno']]
+        if matching:
+            deepest = max(matching, key=lambda c: c['depth'])
+            return {
+                'type': deepest['type'],
+                'nesting_level': deepest['depth'],
+                'source': deepest['source'],
+            }
+        return None
+
     def _is_in_loop_else(self, lineno):
         """Check if lineno falls within a loop's else block."""
         if not hasattr(self, '_loop_else_ranges'):
@@ -1203,6 +1248,11 @@ class PGLogger(bdb.Bdb):
             # Loop else detection
             if self._is_in_loop_else(lineno):
                 trace_entry['loop_else'] = True
+
+        # Phase 5: Advanced concepts - Comprehension info
+        comp_info = self._detect_comprehension(lineno)
+        if comp_info:
+            trace_entry['comprehension'] = comp_info
 
         # if there's an exception, then record its info:
         if event_type == 'exception':
