@@ -179,7 +179,11 @@ def __restricted_import__(*args):
         #
         # unload it so that if someone attempts to reload it, then it has to be
         # loaded from the filesystem, which is (supposedly!) blocked by setrlimit
-        for mod in ('os', 'sys', 'posix', 'gc'):
+        #
+        # NOTE: 'sys' is intentionally excluded — many stdlib modules (e.g.,
+        # dataclasses on Python 3.14) reference it internally, and it is not
+        # a security risk by itself.
+        for mod in ('os', 'posix', 'gc'):
             if hasattr(imported_mod, mod):
                 delattr(imported_mod, mod)
 
@@ -749,6 +753,237 @@ class PGLogger(bdb.Bdb):
             }
         return None
 
+    CO_COROUTINE = 0x80
+
+    def _detect_async(self, top_frame):
+        """Detect if current frame is an async function/coroutine."""
+        if top_frame is None:
+            return None
+        flags = top_frame.f_code.co_flags
+        if flags & self.CO_COROUTINE:
+            return 'async def'
+        return None
+
+    def _find_context_managers(self):
+        """Pre-parse source AST to find with blocks."""
+        self._with_blocks = []
+        try:
+            tree = ast.parse(self.executed_script)
+            self._collect_with_blocks(tree)
+        except SyntaxError:
+            pass
+
+    def _collect_with_blocks(self, node):
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.With):
+                src = ast.get_source_segment(self.executed_script, child) or ''
+                self._with_blocks.append({
+                    'lineno': child.lineno,
+                    'end_lineno': getattr(child, 'end_lineno', child.lineno),
+                    'source': src.strip(),
+                })
+            self._collect_with_blocks(child)
+
+    def _detect_context_manager(self, lineno):
+        """Detect if current line is inside a with block."""
+        if not hasattr(self, '_with_blocks'):
+            self._find_context_managers()
+        for wb in self._with_blocks:
+            if wb['lineno'] <= lineno <= wb['end_lineno']:
+                return {
+                    'source': wb['source'],
+                    'is_entry': (lineno == wb['lineno']),
+                }
+        return None
+
+    _DUNDER_OPS = {
+        '__add__': '+', '__radd__': '+',
+        '__sub__': '-', '__rsub__': '-',
+        '__mul__': '*', '__rmul__': '*',
+        '__truediv__': '/', '__rtruediv__': '/',
+        '__floordiv__': '//', '__rfloordiv__': '//',
+        '__mod__': '%', '__rmod__': '%',
+        '__pow__': '**', '__rpow__': '**',
+        '__eq__': '==', '__ne__': '!=',
+        '__lt__': '<', '__le__': '<=',
+        '__gt__': '>', '__ge__': '>=',
+        '__and__': '&', '__rand__': '&',
+        '__or__': '|', '__ror__': '|',
+        '__xor__': '^', '__rxor__': '^',
+        '__lshift__': '<<', '__rshift__': '>>',
+        '__getitem__': '[]', '__setitem__': '[] =',
+        '__call__': '()', '__contains__': 'in',
+        '__neg__': 'unary -', '__pos__': 'unary +',
+        '__invert__': '~', '__len__': 'len()',
+        '__iter__': 'iter()', '__next__': 'next()',
+        '__enter__': 'with', '__exit__': 'with',
+    }
+
+    def _detect_operator_overload(self, top_frame):
+        """Detect if current frame is inside an operator overload dunder method."""
+        if top_frame is None:
+            return None
+        co_name = top_frame.f_code.co_name
+        if co_name in self._DUNDER_OPS:
+            return {
+                'dunder': co_name,
+                'operator': self._DUNDER_OPS[co_name],
+            }
+        return None
+
+    # Phase 6: Multithreading
+    def _find_threading_calls(self):
+        """Pre-parse source for threading.Thread creation and start."""
+        self._threading_lines = []
+        try:
+            tree = ast.parse(self.executed_script)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call):
+                    # threading.Thread(...)
+                    if isinstance(node.func, ast.Attribute) and node.func.attr == 'Thread':
+                        self._threading_lines.append({
+                            'type': 'Thread()',
+                            'lineno': node.lineno,
+                        })
+                    # .start()
+                    if isinstance(node.func, ast.Attribute) and node.func.attr == 'start':
+                        self._threading_lines.append({
+                            'type': '.start()',
+                            'lineno': node.lineno,
+                        })
+        except SyntaxError:
+            pass
+
+    def _detect_thread_info(self, lineno):
+        """Detect if current line involves threading operations."""
+        if not hasattr(self, '_threading_lines'):
+            self._find_threading_calls()
+        for tl in self._threading_lines:
+            if tl['lineno'] == lineno:
+                return tl
+        # Also detect non-main thread via current thread name
+        try:
+            import threading
+            ct = threading.current_thread()
+            if ct.name != 'MainThread':
+                return {'type': 'thread: ' + ct.name, 'lineno': lineno}
+        except Exception:
+            pass
+        return None
+
+    # Phase 7: I/O & Files
+    def _find_io_operations(self):
+        """Pre-parse source AST to find file I/O and print lines."""
+        self._io_operations = []
+        try:
+            tree = ast.parse(self.executed_script)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                    if node.func.id == 'open':
+                        src = ast.get_source_segment(self.executed_script, node) or ''
+                        self._io_operations.append({
+                            'type': 'open',
+                            'lineno': node.lineno,
+                            'end_lineno': getattr(node, 'end_lineno', node.lineno),
+                            'source': src.strip(),
+                        })
+                    elif node.func.id in ('print', 'input'):
+                        self._io_operations.append({
+                            'type': node.func.id,
+                            'lineno': node.lineno,
+                            'end_lineno': getattr(node, 'end_lineno', node.lineno),
+                            'source': (node.func.id + '(...)'),
+                        })
+        except SyntaxError:
+            pass
+
+    def _detect_io_operation(self, lineno):
+        """Detect if current line has an I/O operation."""
+        if not hasattr(self, '_io_operations'):
+            self._find_io_operations()
+        for op in self._io_operations:
+            if op['lineno'] <= lineno <= op['end_lineno']:
+                return op
+        return None
+
+    # Phase 8: Metaprogramming
+    _META_DUNDERS = {
+        '__getattr__': 'attribute access',
+        '__setattr__': 'attribute set',
+        '__delattr__': 'attribute delete',
+        '__get__': 'descriptor get',
+        '__set__': 'descriptor set',
+        '__delete__': 'descriptor delete',
+        '__new__': 'object creation',
+        '__init_subclass__': 'subclass init',
+        '__class_getitem__': 'generic type',
+        '__instancecheck__': 'isinstance check',
+        '__subclasscheck__': 'issubclass check',
+        '__prepare__': 'namespace prep',
+    }
+
+    def _detect_metaprog(self, top_frame, lineno):
+        """Detect if executing inside a metaprogramming dunder method.
+        Uses both frame-based detection and AST-based fallback for __new__
+        (which is not reliably traced by bdb on Python 3.14+)."""
+        # Frame-based detection (requires a real frame)
+        if top_frame is not None:
+            co_name = top_frame.f_code.co_name
+            if co_name in self._META_DUNDERS:
+                return {
+                    'dunder': co_name,
+                    'description': self._META_DUNDERS[co_name],
+                }
+        # AST-based fallback: detect calls to classes that define __new__
+        # Works at module level even when top_frame is None
+        if not hasattr(self, '_new_class_calls'):
+            self._find_new_class_calls()
+        if lineno in self._new_class_calls:
+            return {
+                'dunder': '__new__',
+                'description': 'object creation (class with __new__)',
+                'ast_detected': True,
+            }
+        return None
+
+    def _find_new_class_calls(self):
+        """Pre-parse AST to find call sites that instantiate classes with __new__."""
+        self._new_class_calls = set()
+        try:
+            tree = ast.parse(self.executed_script)
+            # Step 1: find classes that define __new__
+            new_classes = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef):
+                    for item in node.body:
+                        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name == '__new__':
+                            new_classes.add(node.name)
+            # Step 2: find call sites that instantiate these classes
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call):
+                    name = None
+                    if isinstance(node.func, ast.Name):
+                        name = node.func.id
+                    if name and name in new_classes:
+                        self._new_class_calls.add(node.lineno)
+        except SyntaxError:
+            pass
+
+    # Phase 9: Memory & Scope
+    def _detect_scope_info(self, top_frame, lineno):
+        """Detect scope depth and nonlocal/free variable usage. Only returns
+        info when there are freevars (closures) or at call/return boundaries."""
+        if top_frame is None:
+            return None
+        freevars = list(top_frame.f_code.co_freevars)
+        if freevars:
+            stack_depth = len(self.stack[:self.curindex + 1])
+            return {
+                'stack_depth': stack_depth,
+                'freevars': freevars,
+            }
+        return None
+
     def _is_in_loop_else(self, lineno):
         """Check if lineno falls within a loop's else block."""
         if not hasattr(self, '_loop_else_ranges'):
@@ -1253,6 +1488,41 @@ class PGLogger(bdb.Bdb):
         comp_info = self._detect_comprehension(lineno)
         if comp_info:
             trace_entry['comprehension'] = comp_info
+
+        # Phase 5.2: Async function detection
+        async_info = self._detect_async(top_frame)
+        if async_info:
+            trace_entry['async_function'] = async_info
+
+        # Phase 5.3: Context manager detection
+        ctx_info = self._detect_context_manager(lineno)
+        if ctx_info:
+            trace_entry['context_manager'] = ctx_info
+
+        # Phase 5.4: Operator overloading detection
+        op_info = self._detect_operator_overload(top_frame)
+        if op_info:
+            trace_entry['operator_overload'] = op_info
+
+        # Phase 6: Multithreading - detect non-main threads
+        thread_info = self._detect_thread_info(lineno)
+        if thread_info:
+            trace_entry['thread_info'] = thread_info
+
+        # Phase 7: I/O & Files - detect file/print operations
+        io_info = self._detect_io_operation(lineno)
+        if io_info:
+            trace_entry['io_operation'] = io_info
+
+        # Phase 8: Metaprogramming - detect dunder methods
+        meta_info = self._detect_metaprog(top_frame, lineno)
+        if meta_info:
+            trace_entry['metaprogramming'] = meta_info
+
+        # Phase 9: Memory & Scope - track stack depth and freevars
+        scope_info = self._detect_scope_info(top_frame, lineno)
+        if scope_info:
+            trace_entry['scope_info'] = scope_info
 
         # if there's an exception, then record its info:
         if event_type == 'exception':

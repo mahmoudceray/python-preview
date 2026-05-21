@@ -1069,6 +1069,51 @@ export class ExecutionVisualizer {
       }
     }
 
+    // Phase 5.2: Async function annotation
+    if (curEntry.async_function) {
+      myViz.curLineControlFlowAnnotation = '~> ' + curEntry.async_function;
+    }
+
+    // Phase 5.3: Context manager annotation
+    if (curEntry.context_manager) {
+      var ctx = curEntry.context_manager;
+      myViz.curLineControlFlowAnnotation = '>> ' + (ctx.is_entry ? 'enters' : 'in') + ' context: ' + ctx.source;
+    }
+
+    // Phase 5.4: Operator overloading annotation
+    if (curEntry.operator_overload) {
+      var op = curEntry.operator_overload;
+      myViz.curLineControlFlowAnnotation = '** ' + op.dunder + ' (' + op.operator + ')';
+    }
+
+    // Phase 6: Multithreading annotation
+    if (curEntry.thread_info) {
+      var thr = curEntry.thread_info;
+      myViz.curLineControlFlowAnnotation = '# ' + thr.type;
+    }
+
+    // Phase 7: I/O & Files annotation
+    if (curEntry.io_operation) {
+      var io = curEntry.io_operation;
+      myViz.curLineControlFlowAnnotation = '>> ' + io.type + ': ' + io.source;
+    }
+
+    // Phase 8: Metaprogramming annotation
+    if (curEntry.metaprogramming) {
+      var meta = curEntry.metaprogramming;
+      myViz.curLineControlFlowAnnotation = '** ' + meta.dunder + ' (' + meta.description + ')';
+    }
+
+    // Phase 9: Memory & Scope annotation
+    if (curEntry.scope_info) {
+      var scope = curEntry.scope_info;
+      var scopeText = 'stack depth: ' + scope.stack_depth;
+      if (scope.freevars && scope.freevars.length > 0) {
+        scopeText += ', closure vars: ' + scope.freevars.join(', ');
+      }
+      myViz.curLineControlFlowAnnotation = scopeText;
+    }
+
     curLineNumber = curEntry.line;
 
     // edge case for the final instruction :0
