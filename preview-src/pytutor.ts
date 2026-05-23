@@ -158,6 +158,7 @@ export class ExecutionVisualizer {
   curLineNumber: number;
   curLineExceptionMsg: string;
   curLineControlFlowAnnotation: string;
+  curLineExceptionTrace: any[];
 
   // true iff trace ended prematurely since maximum instruction limit has
   // been reached
@@ -736,9 +737,28 @@ export class ExecutionVisualizer {
       myViz.navControls.showError(null);
     }
 
-    // render control flow annotation (if applicable):
+    // render control flow annotation and exception trace (if applicable):
+    var annotationParts = [];
     if (myViz.curLineControlFlowAnnotation) {
-      myViz.navControls.showAnnotation(myViz.curLineControlFlowAnnotation);
+      annotationParts.push(myViz.curLineControlFlowAnnotation);
+    }
+    if (myViz.curLineExceptionTrace && myViz.curLineExceptionTrace.length > 1) {
+      var trace = myViz.curLineExceptionTrace;
+      var traceHtml = '<span style="color: #c62828; font-weight: bold;">exception trace:</span>';
+      traceHtml += '<div style="font-size: 9pt; margin-top: 2px; max-height: 120px; overflow-y: auto;">';
+      for (var i = 0; i < trace.length; i++) {
+        var f = trace[i];
+        traceHtml += '<div style="padding: 1px 0 1px 12px;">';
+        traceHtml += '<span style="color: #666;">' + htmlspecialchars(f.filename.replace(/^.*[\\\/]/, '')) + '</span>';
+        traceHtml += ':<span style="color: #888;">' + f.lineno + '</span>';
+        traceHtml += ' in <span style="color: #444;">' + htmlspecialchars(f.function) + '</span>';
+        traceHtml += '</div>';
+      }
+      traceHtml += '</div>';
+      annotationParts.push(traceHtml);
+    }
+    if (annotationParts.length > 0) {
+      myViz.navControls.showAnnotation(annotationParts.join('<br/>'));
     } else {
       myViz.navControls.showAnnotation(null);
     }
@@ -1036,6 +1056,7 @@ export class ExecutionVisualizer {
     myViz.prevLineIsReturn = undefined;
     myViz.curLineExceptionMsg = undefined;
     myViz.curLineControlFlowAnnotation = undefined;
+    myViz.curLineExceptionTrace = undefined;
     var isTerminated = (!myViz.instrLimitReached && isLastInstr);
     var prevLineNumber = null;
     var curEntry = myViz.curTrace[myViz.curInstr];
@@ -1047,6 +1068,9 @@ export class ExecutionVisualizer {
       assert(curEntry.exception_msg);
       hasError = true;
       myViz.curLineExceptionMsg = curEntry.exception_msg;
+      if (curEntry.exception_trace) {
+        myViz.curLineExceptionTrace = curEntry.exception_trace;
+      }
     }
 
     // Phase 4: Control flow annotations
@@ -2024,6 +2048,10 @@ class DataVisualizer {
       .each(function(varname, i) {
         if (i == 0) {
           $(this).html(varname);
+          // Variable Diff: add CSS class for status
+          if (curEntry.globals_diff && curEntry.globals_diff[varname]) {
+            $(this).parent().addClass('varDiff-' + curEntry.globals_diff[varname]);
+          }
         }
         else {
           // always delete and re-render the global var ...
@@ -2049,6 +2077,12 @@ class DataVisualizer {
           }
           else {
             var heapObjID = myViz.generateHeapObjID(getRefID(val), curInstr);
+
+            // Object Identity: show Python id() for non-primitive values
+            var objId = curEntry.obj_ids && curEntry.obj_ids[varname];
+            if (objId) {
+              $(this).append('<div style="font-size: 8pt; color: #999; line-height: 1.2;">id=' + objId + '</div>');
+            }
 
             if (myViz.params.textualMemoryLabels) {
               var labelID = varDivID + '_text_label';

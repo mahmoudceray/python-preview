@@ -1031,6 +1031,7 @@ class PGLogger(bdb.Bdb):
     # General interaction function
 
     def interaction(self, frame, traceback, event_type):
+        self._current_traceback = traceback  # save for exception trace feature
         self.setup(frame, traceback)
         tos = self.stack[self.curindex]
         top_frame = tos[0]
@@ -1554,21 +1555,22 @@ class PGLogger(bdb.Bdb):
             if caught_by:
                 trace_entry['caught_by_except'] = 'line ' + str(caught_by[0]) + ': ' + caught_by[1]
             # Feature: Full exception traceback chain
-            tb = exc[2]
-            if tb and tb.tb_next:  # only show if there are multiple frames
+            tb_info = self._current_traceback if hasattr(self, '_current_traceback') else None
+            if tb_info and tb_info.tb_next:
                 tb_chain = []
                 seen = set()
-                while tb:
-                    f = tb.tb_frame
-                    key = (f.f_code.co_filename, tb.tb_lineno, f.f_code.co_name)
+                t = tb_info
+                while t:
+                    f = t.tb_frame
+                    key = (f.f_code.co_filename, t.tb_lineno, f.f_code.co_name)
                     if key not in seen:
                         seen.add(key)
                         tb_chain.append({
                             'filename': f.f_code.co_filename,
-                            'lineno': tb.tb_lineno,
+                            'lineno': t.tb_lineno,
                             'function': f.f_code.co_name,
                         })
-                    tb = tb.tb_next
+                    t = t.tb_next
                 if len(tb_chain) > 1:
                     trace_entry['exception_trace'] = tb_chain
 
